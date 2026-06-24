@@ -18,7 +18,7 @@ const today = formatDate(new Date())
 const USE_MONTHDAYS: Interval[] = ['monthly', 'quarterly', 'semi_annual', 'annual']
 
 interface Props {
-  onAdd: (title: string, intvl: Interval, start_date: string, weekdays?: number[], monthdays?: number[]) => void
+  onAdd: (title: string, intvl: Interval, start_date: string, weekdays?: number[], monthdays?: number[], end_date?: string) => void
   depth?: number
 }
 
@@ -29,6 +29,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   const [startDate, setStartDate] = useState(today)
   const [weekdays, setWeekdays] = useState<number[]>([])
   const [monthdays, setMonthdays] = useState<number[]>([])
+  const [endDate, setEndDate] = useState('')
   const titleRef = useRef<HTMLInputElement>(null)
 
   function handleOpen() {
@@ -38,7 +39,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
 
   function reset() {
     setTitle(''); setIntvl('monthly'); setStartDate(today)
-    setWeekdays([]); setMonthdays([])
+    setWeekdays([]); setMonthdays([]); setEndDate('')
     setOpen(false)
   }
 
@@ -58,12 +59,13 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
 
   function commit() {
     if (!isValid()) return
+    const ed = endDate || undefined
     if (intvl === 'weekly') {
-      onAdd(title.trim(), intvl, startDate, weekdays)
+      onAdd(title.trim(), intvl, startDate, weekdays, undefined, ed)
     } else if (USE_MONTHDAYS.includes(intvl) && monthdays.length > 0) {
-      onAdd(title.trim(), intvl, startDate, undefined, monthdays)
+      onAdd(title.trim(), intvl, startDate, undefined, monthdays, ed)
     } else {
-      onAdd(title.trim(), intvl, intvl === 'daily' ? today : startDate)
+      onAdd(title.trim(), intvl, startDate, undefined, undefined, ed)
     }
     reset()
   }
@@ -73,7 +75,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
     if (e.key === 'Escape') reset()
   }
 
-  const showStartDate = intvl !== 'daily'
+  const showStartDate = true
   const showWeekdays = intvl === 'weekly'
   const showMonthdays = USE_MONTHDAYS.includes(intvl)
   const selectedDay = parseInt(startDate.split('-')[2])
@@ -161,6 +163,22 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
             )}
           </div>
         )}
+
+        {/* 마침일 */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-400">마침일</span>
+          <input
+            type="date"
+            value={endDate}
+            min={startDate}
+            onChange={e => setEndDate(e.target.value)}
+            className="text-xs border border-gray-200 rounded px-2 py-1 outline-none"
+          />
+          {endDate && (
+            <button type="button" onClick={() => setEndDate('')}
+                    className="text-xs text-gray-300 hover:text-gray-500">✕</button>
+          )}
+        </div>
 
         {/* 버튼 */}
         <div className="flex items-center gap-2">

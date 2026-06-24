@@ -63,12 +63,12 @@ export default function ObjectModal({ objectId, onClose }: Props) {
     reorderSchedules(arrayMove(subs, oldIndex, newIndex))
   }
 
-  function handleAddSuper(title: string, intvl: Interval, start_date: string, weekdays?: number[], monthdays?: number[]) {
-    addSchedule(objectId, title, intvl, start_date, undefined, weekdays, monthdays)
+  function handleAddSuper(title: string, intvl: Interval, start_date: string, weekdays?: number[], monthdays?: number[], end_date?: string) {
+    addSchedule(objectId, title, intvl, start_date, undefined, weekdays, monthdays, end_date)
   }
 
-  function handleAddSub(superId: string, title: string, intvl: Interval, start_date: string, weekdays?: number[], monthdays?: number[]) {
-    addSchedule(objectId, title, intvl, start_date, superId, weekdays, monthdays)
+  function handleAddSub(superId: string, title: string, intvl: Interval, start_date: string, weekdays?: number[], monthdays?: number[], end_date?: string) {
+    addSchedule(objectId, title, intvl, start_date, superId, weekdays, monthdays, end_date)
   }
 
   return (
@@ -144,14 +144,14 @@ export default function ObjectModal({ objectId, onClose }: Props) {
                         ))}
                       </SortableContext>
                     </DndContext>
-                    <AddScheduleRow depth={1} onAdd={(t, i, d, w, m) => handleAddSub(sup.id, t, i, d, w, m)} />
+                    <AddScheduleRow depth={1} onAdd={(t, i, d, w, m, e) => handleAddSub(sup.id, t, i, d, w, m, e)} />
                   </ScheduleItem>
                 )
               })}
             </SortableContext>
           </DndContext>
 
-          <AddScheduleRow onAdd={(t, i, d, w, m) => handleAddSuper(t, i, d, w, m)} />
+          <AddScheduleRow onAdd={(t, i, d, w, m, e) => handleAddSuper(t, i, d, w, m, e)} />
         </div>
 
         {/* footer */}
