@@ -12,7 +12,7 @@ interface DataContextValue {
   deleteObject: (id: string) => Promise<void>
   addSchedule: (
     obj_id: string, title: string, intvl: Interval, start_date: string,
-    parent_id?: string, weekdays?: number[], monthdays?: number[]
+    parent_id?: string, weekdays?: number[], monthdays?: number[], end_date?: string
   ) => Promise<void>
   updateSchedule: (id: string, patch: Partial<Schedule>) => Promise<void>
   deleteSchedule: (id: string) => Promise<void>
