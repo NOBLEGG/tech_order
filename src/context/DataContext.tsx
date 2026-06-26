@@ -68,7 +68,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   async function addSchedule(
     obj_id: string, title: string, intvl: Interval, start_date: string,
-    parent_id?: string, weekdays?: number[], monthdays?: number[]
+    parent_id?: string, weekdays?: number[], monthdays?: number[], end_date?: string
   ) {
     const siblings = schedules.filter(s =>
       s.obj_id === obj_id && (parent_id ? s.parent_id === parent_id : s.parent_id === null)
@@ -78,6 +78,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       .from('schedules')
       .insert({
         obj_id, title, intvl, start_date,
+        end_date: end_date ?? null,
         weekdays: weekdays ?? null,
         monthdays: monthdays ?? null,
         parent_id: parent_id ?? null,

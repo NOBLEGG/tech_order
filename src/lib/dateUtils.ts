@@ -43,15 +43,20 @@ function isMonthDayMatch(date: Date, monthdays: number[]): boolean {
 }
 
 export function isScheduleDueOn(schedule: Schedule, date: Date): boolean {
-  if (schedule.intvl === 'daily') return true
+  const origin = startOfDay(parseISO(schedule.start_date))
+  const end = schedule.end_date ? startOfDay(parseISO(schedule.end_date)) : null
+
+  if (end && startOfDay(date) > end) return false
+
+  if (schedule.intvl === 'daily') {
+    return date >= origin
+  }
 
   if (schedule.intvl === 'weekly') {
     if (!schedule.weekdays || schedule.weekdays.length === 0) return false
-    const origin = startOfDay(parseISO(schedule.start_date))
     return date >= origin && schedule.weekdays.includes(getDay(date))
   }
 
-  const origin = startOfDay(parseISO(schedule.start_date))
   if (date < origin) return false
 
   if (schedule.monthdays && schedule.monthdays.length > 0) {
