@@ -31,26 +31,45 @@ export function useCompletions(scheduleIds: string[], year: number, month: numbe
   }
 
   function isCompleted(scheduleId: string, date: Date): boolean {
-    const d = formatDate(date)
-    return completions.some(c => c.schedule_id === scheduleId && c.due_date === d)
+    return !!getCompletion(scheduleId, date)
   }
 
-  async function toggle(scheduleId: string, date: Date) {
+  function getCompletion(scheduleId: string, date: Date): Completion | undefined {
     const d = formatDate(date)
-    const existing = completions.find(c => c.schedule_id === scheduleId && c.due_date === d)
+    return completions.find(c => c.schedule_id === scheduleId && c.due_date === d)
+  }
+
+  async function saveCompletion(scheduleId: string, date: Date, memo: string) {
+    const d = formatDate(date)
+    const existing = getCompletion(scheduleId, date)
+    const normalizedMemo = memo.trim() || null
 
     if (existing) {
-      await supabase.from('completions').delete().eq('id', existing.id)
-      setCompletions(prev => prev.filter(c => c.id !== existing.id))
-    } else {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('completions')
-        .insert({ schedule_id: scheduleId, due_date: d, user_id: user!.id })
+        .update({ memo: normalizedMemo })
+        .eq('id', existing.id)
         .select()
         .single()
-      if (data) setCompletions(prev => [...prev, data])
+      if (error) { console.error('saveCompletion:', error); return }
+      if (data) setCompletions(prev => prev.map(c => c.id === existing.id ? data : c))
+      return
     }
+
+    const { data, error } = await supabase
+      .from('completions')
+      .insert({ schedule_id: scheduleId, due_date: d, user_id: user!.id, memo: normalizedMemo })
+      .select()
+      .single()
+    if (error) { console.error('saveCompletion:', error); return }
+    if (data) setCompletions(prev => [...prev, data])
   }
 
-  return { completions, isCompleted, toggle }
+  async function deleteCompletion(id: string) {
+    const { error } = await supabase.from('completions').delete().eq('id', id)
+    if (error) { console.error('deleteCompletion:', error); return }
+    setCompletions(prev => prev.filter(c => c.id !== id))
+  }
+
+  return { completions, getCompletion, isCompleted, saveCompletion, deleteCompletion }
 }

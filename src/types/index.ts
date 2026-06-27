@@ -39,6 +39,7 @@ export interface Completion {
   id: string
   schedule_id: string
   due_date: string
+  memo: string | null
   user_id: string
   created_at: string
 }

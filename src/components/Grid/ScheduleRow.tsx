@@ -1,20 +1,27 @@
 import { useState } from 'react'
 import Cell from './Cell'
-import type { Schedule } from '../../types'
+import type { Completion, Schedule } from '../../types'
 import { isBefore, startOfDay } from 'date-fns'
 
 interface Props {
   schedule: Schedule
   subSchedules: Schedule[]
   dates: Date[]
-  isCompleted: (scheduleId: string, date: Date) => boolean
-  onToggle: (scheduleId: string, date: Date) => void
+  getCompletion: (scheduleId: string, date: Date) => Completion | undefined
+  onOpenCompletion: (schedule: Schedule, date: Date) => void
   depth: number
 }
 
 const today = startOfDay(new Date())
 
-export default function ScheduleRow({ schedule, subSchedules, dates, isCompleted, onToggle, depth }: Props) {
+export default function ScheduleRow({
+  schedule,
+  subSchedules,
+  dates,
+  getCompletion,
+  onOpenCompletion,
+  depth,
+}: Props) {
   const [expanded, setExpanded] = useState(true)
   const hasSubs = subSchedules.length > 0
   const indent = depth === 0 ? 'pl-4' : 'pl-8'
@@ -45,9 +52,9 @@ export default function ScheduleRow({ schedule, subSchedules, dates, isCompleted
             key={date.toISOString()}
             schedule={schedule}
             date={date}
-            isCompleted={isCompleted(schedule.id, date)}
+            completion={getCompletion(schedule.id, date)}
             isPast={isBefore(startOfDay(date), today)}
-            onToggle={() => onToggle(schedule.id, date)}
+            onOpen={() => onOpenCompletion(schedule, date)}
           />
         ))}
       </tr>
@@ -58,8 +65,8 @@ export default function ScheduleRow({ schedule, subSchedules, dates, isCompleted
           schedule={sub}
           subSchedules={[]}
           dates={dates}
-          isCompleted={isCompleted}
-          onToggle={onToggle}
+          getCompletion={getCompletion}
+          onOpenCompletion={onOpenCompletion}
           depth={depth + 1}
         />
       ))}

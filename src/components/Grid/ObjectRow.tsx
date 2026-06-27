@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import ScheduleRow from './ScheduleRow'
-import type { AppObject, Schedule } from '../../types'
+import type { AppObject, Completion, Schedule } from '../../types'
 
 function LinkIcon() {
   return (
@@ -24,12 +24,19 @@ interface Props {
   object: AppObject
   schedules: Schedule[]
   dates: Date[]
-  isCompleted: (scheduleId: string, date: Date) => boolean
-  onToggle: (scheduleId: string, date: Date) => void
+  getCompletion: (scheduleId: string, date: Date) => Completion | undefined
+  onOpenCompletion: (schedule: Schedule, date: Date) => void
   onEdit: () => void
 }
 
-export default function ObjectRow({ object, schedules, dates, isCompleted, onToggle, onEdit }: Props) {
+export default function ObjectRow({
+  object,
+  schedules,
+  dates,
+  getCompletion,
+  onOpenCompletion,
+  onEdit,
+}: Props) {
   const [expanded, setExpanded] = useState(true)
   const superSchedules = schedules.filter(s => s.obj_id === object.id && s.parent_id === null)
     .sort((a, b) => a.sort_order - b.sort_order)
@@ -85,8 +92,8 @@ export default function ObjectRow({ object, schedules, dates, isCompleted, onTog
           subSchedules={schedules.filter(sub => sub.parent_id === s.id)
             .sort((a, b) => a.sort_order - b.sort_order)}
           dates={dates}
-          isCompleted={isCompleted}
-          onToggle={onToggle}
+          getCompletion={getCompletion}
+          onOpenCompletion={onOpenCompletion}
           depth={0}
         />
       ))}

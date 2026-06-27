@@ -2,19 +2,28 @@ import { useState } from 'react'
 import { addMonths, subMonths, format, isToday, isSunday, isSaturday } from 'date-fns'
 import ObjectRow from './ObjectRow'
 import AddObjectRow from './AddObjectRow'
+import CompletionModal from './CompletionModal'
 import { useData } from '../../context/DataContext'
 import { useCompletions } from '../../hooks/useCompletions'
 import { getDaysInMonth, formatDisplayDate } from '../../lib/dateUtils'
+import type { Schedule } from '../../types'
+
+interface ActiveCompletionCell {
+  schedule: Schedule
+  date: Date
+}
 
 export default function Grid({ onEditObject }: { onEditObject: (id: string) => void }) {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [activeCell, setActiveCell] = useState<ActiveCompletionCell | null>(null)
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
   const days = getDaysInMonth(currentDate)
 
   const { objects, schedules, loading, addObject } = useData()
   const scheduleIds = schedules.map(s => s.id)
-  const { isCompleted, toggle } = useCompletions(scheduleIds, year, month)
+  const { getCompletion, saveCompletion, deleteCompletion } = useCompletions(scheduleIds, year, month)
+  const activeCompletion = activeCell ? getCompletion(activeCell.schedule.id, activeCell.date) : undefined
 
   return (
     <div className="flex flex-col h-[calc(100vh-2.5rem)]">
@@ -66,8 +75,8 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
                   object={obj}
                   schedules={schedules}
                   dates={days}
-                  isCompleted={isCompleted}
-                  onToggle={toggle}
+                  getCompletion={getCompletion}
+                  onOpenCompletion={(schedule, date) => setActiveCell({ schedule, date })}
                   onEdit={() => onEditObject(obj.id)}
                 />
               ))}
@@ -76,6 +85,17 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
           </table>
         )}
       </div>
+
+      {activeCell && (
+        <CompletionModal
+          schedule={activeCell.schedule}
+          date={activeCell.date}
+          completion={activeCompletion}
+          onSave={saveCompletion}
+          onDelete={deleteCompletion}
+          onClose={() => setActiveCell(null)}
+        />
+      )}
     </div>
   )
 }
