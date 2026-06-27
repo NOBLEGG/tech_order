@@ -13,7 +13,7 @@ const INTERVALS: { value: Interval; label: string }[] = [
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
-const today = formatDate(new Date())
+const getToday = () => formatDate(new Date())
 
 const USE_MONTHDAYS: Interval[] = ['monthly', 'quarterly', 'semi_annual', 'annual']
 
@@ -26,7 +26,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [intvl, setIntvl] = useState<Interval>('monthly')
-  const [startDate, setStartDate] = useState(today)
+  const [startDate, setStartDate] = useState(getToday())
   const [weekdays, setWeekdays] = useState<number[]>([])
   const [monthdays, setMonthdays] = useState<number[]>([])
   const [endDate, setEndDate] = useState('')
@@ -38,7 +38,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   }
 
   function reset() {
-    setTitle(''); setIntvl('monthly'); setStartDate(today)
+    setTitle(''); setIntvl('monthly'); setStartDate(getToday())
     setWeekdays([]); setMonthdays([]); setEndDate('')
     setOpen(false)
   }
@@ -68,6 +68,11 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
       onAdd(title.trim(), intvl, startDate, undefined, undefined, ed)
     }
     reset()
+  }
+
+  function handleStartDateChange(value: string) {
+    if (value < getToday()) return
+    setStartDate(value)
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -151,7 +156,8 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
             <input
               type="date"
               value={startDate}
-              onChange={e => setStartDate(e.target.value)}
+              min={getToday()}
+              onChange={e => handleStartDateChange(e.target.value)}
               aria-label="시작일"
               className="text-xs border border-gray-200 rounded px-2 py-1 outline-none"
             />
