@@ -42,9 +42,6 @@ export default function ScheduleRow({
             )}
             {!hasSubs && <span className="w-[10px] flex-shrink-0" />}
             <span className="truncate">{schedule.title}</span>
-            <span className="ml-1 text-gray-300 text-[10px] flex-shrink-0">
-              {intvlLabel(schedule.intvl)}
-            </span>
           </div>
         </td>
         {dates.map(date => {
@@ -77,12 +74,4 @@ export default function ScheduleRow({
       ))}
     </>
   )
-}
-
-function intvlLabel(intvl: string) {
-  const map: Record<string, string> = {
-    daily: '매일', weekly: '매주', monthly: '매월',
-    quarterly: '분기', semi_annual: '반기', annual: '매년',
-  }
-  return map[intvl] ?? intvl
 }
