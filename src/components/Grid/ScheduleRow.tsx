@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Cell from './Cell'
 import type { Completion, Schedule } from '../../types'
-import { isBefore, startOfDay } from 'date-fns'
+import { isAfter, isBefore, startOfDay } from 'date-fns'
 
 interface Props {
   schedule: Schedule
@@ -47,16 +47,21 @@ export default function ScheduleRow({
             </span>
           </div>
         </td>
-        {dates.map(date => (
-          <Cell
-            key={date.toISOString()}
-            schedule={schedule}
-            date={date}
-            completion={getCompletion(schedule.id, date)}
-            isPast={isBefore(startOfDay(date), today)}
-            onOpen={() => onOpenCompletion(schedule, date)}
-          />
-        ))}
+        {dates.map(date => {
+          const isFuture = isAfter(startOfDay(date), today)
+
+          return (
+            <Cell
+              key={date.toISOString()}
+              schedule={schedule}
+              date={date}
+              completion={getCompletion(schedule.id, date)}
+              isPast={isBefore(startOfDay(date), today)}
+              isFuture={isFuture}
+              onOpen={() => onOpenCompletion(schedule, date)}
+            />
+          )
+        })}
       </tr>
 
       {expanded && hasSubs && subSchedules.map(sub => (

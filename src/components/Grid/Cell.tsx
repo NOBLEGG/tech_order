@@ -6,10 +6,11 @@ interface Props {
   date: Date
   completion?: Completion
   isPast: boolean
+  isFuture: boolean
   onOpen: () => void
 }
 
-export default function Cell({ schedule, date, completion, isPast, onOpen }: Props) {
+export default function Cell({ schedule, date, completion, isPast, isFuture, onOpen }: Props) {
   const due = isScheduleDueOn(schedule, date)
   const isCompleted = !!completion
   const hasMemo = !!completion?.memo?.trim()
@@ -21,10 +22,11 @@ export default function Cell({ schedule, date, completion, isPast, onOpen }: Pro
   return (
     <td className="border-r border-gray-100 w-10 min-w-[2.5rem] text-center">
       <button
-        onClick={onOpen}
-        title={hasMemo ? completion!.memo! : '완료 메모 열기'}
+        onClick={isFuture ? undefined : onOpen}
+        disabled={isFuture}
+        title={isFuture ? '미래 일정은 수정할 수 없습니다.' : hasMemo ? completion!.memo! : '완료 메모 열기'}
         className="relative w-5 h-5 rounded border flex items-center justify-center mx-auto
-                   transition-colors"
+                   transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         style={{
           borderColor: isCompleted ? '#4ade80' : isPast ? '#fca5a5' : '#d1d5db',
           backgroundColor: isCompleted ? '#4ade80' : 'transparent',
