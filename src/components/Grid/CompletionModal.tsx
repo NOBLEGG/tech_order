@@ -1,24 +1,35 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import type { Completion, Schedule } from '../../types'
+import { decodeCompletionMemo, isNoteOnlyMemo } from '../../lib/completionMemo'
 
 interface Props {
   schedule: Schedule
   date: Date
   completion?: Completion
+  canToggleCompletion: boolean
   onSave: (scheduleId: string, date: Date, memo: string) => Promise<void>
   onDelete: (completionId: string) => Promise<void>
   onClose: () => void
 }
 
-export default function CompletionModal({ schedule, date, completion, onSave, onDelete, onClose }: Props) {
-  const [completed, setCompleted] = useState(!!completion)
-  const [memo, setMemo] = useState(completion?.memo ?? '')
+export default function CompletionModal({
+  schedule,
+  date,
+  completion,
+  canToggleCompletion,
+  onSave,
+  onDelete,
+  onClose,
+}: Props) {
+  const isCompleted = !!completion && !isNoteOnlyMemo(completion.memo)
+  const [completed, setCompleted] = useState(isCompleted)
+  const [memo, setMemo] = useState(decodeCompletionMemo(completion?.memo))
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setCompleted(!!completion)
-    setMemo(completion?.memo ?? '')
+    setCompleted(!!completion && !isNoteOnlyMemo(completion.memo))
+    setMemo(decodeCompletionMemo(completion?.memo))
   }, [completion?.id, completion?.memo])
 
   useEffect(() => {
@@ -32,7 +43,11 @@ export default function CompletionModal({ schedule, date, completion, onSave, on
 
   async function handleSave() {
     setSaving(true)
-    if (completed) {
+    if (!canToggleCompletion) {
+      if (completion || memo.trim()) {
+        await onSave(schedule.id, date, memo)
+      }
+    } else if (completed) {
       await onSave(schedule.id, date, memo)
     } else if (completion) {
       await onDelete(completion.id)
@@ -62,19 +77,26 @@ export default function CompletionModal({ schedule, date, completion, onSave, on
           <label className="flex items-center gap-2 text-sm text-gray-700 mb-3">
             <input
               type="checkbox"
-              checked={completed}
+              checked={canToggleCompletion ? completed : isCompleted}
               onChange={e => setCompleted(e.target.checked)}
-              className="w-4 h-4 accent-green-400"
+              disabled={!canToggleCompletion}
+              className="w-4 h-4 accent-green-400 disabled:cursor-not-allowed disabled:opacity-60"
             />
             완료로 기록
           </label>
+
+          {!canToggleCompletion && (
+            <p className="mb-3 text-xs text-gray-400">
+              완료 상태는 오늘만 바꿀 수 있고, 메모는 남기거나 수정할 수 있어요.
+            </p>
+          )}
 
           <label className="block">
             <span className="block text-xs text-gray-400 font-medium mb-1.5">메모</span>
             <textarea
               value={memo}
               onChange={e => setMemo(e.target.value)}
-              disabled={!completed}
+              disabled={canToggleCompletion ? !completed : false}
               placeholder="남은 문제, 다음에 다룰 점, 참고할 생각을 적어두세요."
               className="w-full h-32 resize-none text-sm border border-gray-200 rounded-lg px-3 py-2
                          outline-none focus:border-blue-300 disabled:bg-gray-50 disabled:text-gray-300"

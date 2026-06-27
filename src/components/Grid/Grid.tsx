@@ -91,6 +91,7 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
           schedule={activeCell.schedule}
           date={activeCell.date}
           completion={activeCompletion}
+          canToggleCompletion={isToday(activeCell.date)}
           onSave={saveCompletion}
           onDelete={deleteCompletion}
           onClose={() => setActiveCell(null)}

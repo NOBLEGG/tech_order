@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { isToday, startOfDay } from 'date-fns'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Completion } from '../types'
 import { formatDate } from '../lib/dateUtils'
+import { encodeNoteOnlyMemo, isNoteOnlyMemo } from '../lib/completionMemo'
 
 export function useCompletions(scheduleIds: string[], year: number, month: number) {
   const { user } = useAuth()
@@ -43,16 +45,49 @@ export function useCompletions(scheduleIds: string[], year: number, month: numbe
     const d = formatDate(date)
     const existing = getCompletion(scheduleId, date)
     const normalizedMemo = memo.trim() || null
+    const today = startOfDay(new Date())
+    const targetDay = startOfDay(date)
 
-    if (existing) {
+    if (targetDay > today) return
+
+    if (!isToday(date) && existing) {
+      if (normalizedMemo === null && isNoteOnlyMemo(existing.memo)) {
+        const { error } = await supabase.from('completions').delete().eq('id', existing.id)
+        if (error) { console.error('saveCompletion:', error); return }
+        setCompletions(prev => prev.filter(c => c.id !== existing.id))
+        return
+      }
+
+      const nextMemo = normalizedMemo === null
+        ? null
+        : isNoteOnlyMemo(existing.memo)
+          ? encodeNoteOnlyMemo(normalizedMemo)
+          : normalizedMemo
+
       const { data, error } = await supabase
         .from('completions')
-        .update({ memo: normalizedMemo })
+        .update({ memo: nextMemo })
         .eq('id', existing.id)
         .select()
         .single()
       if (error) { console.error('saveCompletion:', error); return }
       if (data) setCompletions(prev => prev.map(c => c.id === existing.id ? data : c))
+      return
+    }
+
+    if (!isToday(date) && normalizedMemo !== null) {
+      const { data, error } = await supabase
+        .from('completions')
+        .insert({
+          schedule_id: scheduleId,
+          due_date: d,
+          user_id: user!.id,
+          memo: encodeNoteOnlyMemo(normalizedMemo),
+        })
+        .select()
+        .single()
+      if (error) { console.error('saveCompletion:', error); return }
+      if (data) setCompletions(prev => [...prev, data])
       return
     }
 

@@ -1,5 +1,6 @@
 import { isScheduleDueOn } from '../../lib/dateUtils'
 import type { Completion, Schedule } from '../../types'
+import { decodeCompletionMemo, isNoteOnlyMemo } from '../../lib/completionMemo'
 
 interface Props {
   schedule: Schedule
@@ -12,8 +13,9 @@ interface Props {
 
 export default function Cell({ schedule, date, completion, isPast, isFuture, onOpen }: Props) {
   const due = isScheduleDueOn(schedule, date)
-  const isCompleted = !!completion
-  const hasMemo = !!completion?.memo?.trim()
+  const isCompleted = !!completion && !isNoteOnlyMemo(completion.memo)
+  const memoText = decodeCompletionMemo(completion?.memo)
+  const hasMemo = !!memoText.trim()
 
   if (!due) {
     return <td className="border-r border-gray-100 w-10 min-w-[2.5rem]" />
@@ -24,7 +26,7 @@ export default function Cell({ schedule, date, completion, isPast, isFuture, onO
       <button
         onClick={isFuture ? undefined : onOpen}
         disabled={isFuture}
-        title={isFuture ? '미래 일정은 수정할 수 없습니다.' : hasMemo ? completion!.memo! : '완료 메모 열기'}
+        title={isFuture ? '미래 일정은 수정할 수 없습니다.' : hasMemo ? memoText : '완료 메모 열기'}
         className="relative w-5 h-5 rounded border flex items-center justify-center mx-auto
                    transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         style={{
