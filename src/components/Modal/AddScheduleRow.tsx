@@ -3,12 +3,12 @@ import type { Interval } from '../../types'
 import { formatDate } from '../../lib/dateUtils'
 
 const INTERVALS: { value: Interval; label: string }[] = [
-  { value: 'daily',       label: '매일' },
-  { value: 'weekly',      label: '매주' },
-  { value: 'monthly',     label: '매월' },
-  { value: 'quarterly',   label: '분기' },
-  { value: 'semi_annual', label: '반기' },
-  { value: 'annual',      label: '매년' },
+  { value: 'daily',       label: 'Daily' },
+  { value: 'weekly',      label: 'Weekly' },
+  { value: 'monthly',     label: 'Monthly' },
+  { value: 'quarterly',   label: 'Quarterly' },
+  { value: 'semi_annual', label: 'Semi-annual' },
+  { value: 'annual',      label: 'Annual' },
 ]
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
@@ -130,7 +130,6 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
         {/* monthday 그리드 */}
         {showMonthdays && (
           <div>
-            <p className="text-xs text-gray-400 mb-1">날짜 선택 (복수 가능)</p>
             <div className="flex flex-wrap gap-1">
               {DAYS.map(day => (
                 <button key={day} type="button" onClick={() => toggleMonthday(day)}
@@ -146,39 +145,42 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
           </div>
         )}
 
-        {/* 시작일 */}
+        {/* 시작일 / 마침일 */}
         {showStartDate && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-400">
-              {showMonthdays && monthdays.length > 0 ? '시작 월' : '시작일'}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
             <input
               type="date"
               value={startDate}
               onChange={e => setStartDate(e.target.value)}
+              aria-label="시작일"
               className="text-xs border border-gray-200 rounded px-2 py-1 outline-none"
             />
-            {!showMonthdays && selectedDay >= 29 && (
-              <span className="text-xs text-amber-400">29일 이상은 짧은 달에서 말일로 처리됩니다</span>
+            <span className="text-xs text-gray-300">~</span>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate}
+              onChange={e => setEndDate(e.target.value)}
+              aria-label="마침일"
+              className="text-xs border border-gray-200 rounded px-2 py-1 outline-none"
+            />
+            {endDate && (
+              <button
+                type="button"
+                onClick={() => setEndDate('')}
+                className="text-xs text-gray-300 hover:text-gray-500"
+                aria-label="마침일 초기화"
+              >
+                ✕
+              </button>
             )}
           </div>
         )}
-
-        {/* 마침일 */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-400">마침일</span>
-          <input
-            type="date"
-            value={endDate}
-            min={startDate}
-            onChange={e => setEndDate(e.target.value)}
-            className="text-xs border border-gray-200 rounded px-2 py-1 outline-none"
-          />
-          {endDate && (
-            <button type="button" onClick={() => setEndDate('')}
-                    className="text-xs text-gray-300 hover:text-gray-500">✕</button>
-          )}
-        </div>
+        {!showMonthdays && selectedDay >= 29 && (
+          <span className="text-xs text-amber-400">
+            29일 이상은 짧은 달에서 말일로 처리됩니다
+          </span>
+        )}
 
         {/* 버튼 */}
         <div className="flex items-center gap-2">
