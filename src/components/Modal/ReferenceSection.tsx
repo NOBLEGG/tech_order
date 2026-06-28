@@ -57,8 +57,8 @@ export default function ReferenceSection({ object, onUpdate }: Props) {
   }
 
   return (
-    <div className="border-t border-gray-100 pt-3 mt-1">
-      <p className="text-xs text-gray-400 font-medium mb-2">레퍼런스</p>
+    <div className="border-gray-100 pt-3 mt-1">
+      <p className="text-xs text-gray-400 font-medium mb-2">Reference</p>
 
       {hasRef ? (
         <div className="flex items-center gap-2">

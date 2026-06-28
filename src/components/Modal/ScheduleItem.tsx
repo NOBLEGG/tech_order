@@ -3,28 +3,29 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Schedule, Interval } from '../../types'
 
-const INTERVALS: { value: Interval; label: string }[] = [
-  { value: 'daily',       label: 'D' },
-  { value: 'weekly',      label: 'W' },
-  { value: 'monthly',     label: 'M' },
-  { value: 'quarterly',   label: 'Q' },
-  { value: 'semi_annual', label: 'S' },
-  { value: 'annual',      label: 'A' },
-]
-
-const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
-
-function weekdayDisplay(weekdays: number[] | null) {
-  if (!weekdays || weekdays.length === 0) return 'W'
-  return [...weekdays].sort((a, b) => a - b).map(d => WEEKDAY_LABELS[d]).join(',')
+const INTERVAL_LABELS: Record<Interval, string> = {
+  daily: 'D',
+  weekly: 'W',
+  monthly: 'M',
+  quarterly: 'Q',
+  semi_annual: 'S',
+  annual: 'A',
 }
 
-function monthdayDisplay(intvl: string, monthdays: number[] | null) {
-  const label: Record<string, string> = {
-    monthly: 'M', quarterly: 'Q', semi_annual: 'S', annual: 'A',
-  }
-  if (!monthdays || monthdays.length === 0) return label[intvl] ?? intvl
-  return `${label[intvl]} ${[...monthdays].sort((a, b) => a - b).join(',')}일`
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function weekdayDisplay(weekdays: number[] | null) {
+  const label = INTERVAL_LABELS.weekly
+  if (!weekdays || weekdays.length === 0) return label
+  const days = [...weekdays].sort((a, b) => a - b).map(d => WEEKDAY_LABELS[d]).join(', ')
+  return `${label} · ${days}`
+}
+
+function monthdayDisplay(intvl: Interval, monthdays: number[] | null) {
+  const label = INTERVAL_LABELS[intvl]
+  if (!monthdays || monthdays.length === 0) return label
+  const days = [...monthdays].sort((a, b) => a - b).join(', ')
+  return `${label} · ${days}`
 }
 
 interface Props {
@@ -111,11 +112,15 @@ export default function ScheduleItem({
 
         {/* interval */}
         {schedule.intvl === 'weekly' ? (
-          <span className="text-xs text-gray-400">{weekdayDisplay(schedule.weekdays)}</span>
+          <span className="text-xs text-gray-400">
+            {weekdayDisplay(schedule.weekdays)}
+          </span>
         ) : schedule.intvl === 'daily' ? (
-          <span className="text-xs text-gray-400">D</span>
+          <span className="text-xs text-gray-400">{INTERVAL_LABELS.daily}</span>
         ) : (
-          <span className="text-xs text-gray-400">{monthdayDisplay(schedule.intvl, schedule.monthdays)}</span>
+          <span className="text-xs text-gray-400">
+            {monthdayDisplay(schedule.intvl, schedule.monthdays)}
+          </span>
         )}
 
         {/* close / delete */}

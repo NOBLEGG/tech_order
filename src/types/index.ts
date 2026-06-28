@@ -29,8 +29,8 @@ export interface Schedule {
   intvl: Interval
   start_date: string
   end_date: string | null
-  weekdays: number[] | null    // weekly 반복 시 요일 (0=일 ~ 6=토)
-  monthdays: number[] | null   // monthly 반복 시 날짜 (1~31)
+  weekdays: number[] | null    // Weekly 인터벌일 때 (0=일 ~ 6=토)
+  monthdays: number[] | null   // monthly 인터벌일 때 날짜 (1~31)
   sort_order: number
   created_at: string
   closed_at: string | null
