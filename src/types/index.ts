@@ -14,6 +14,7 @@ export interface AppObject {
   ref_type: ReferenceType | null
   sort_order: number
   created_at: string
+  closed_at: string | null
 }
 
 /** 스케줄 인터벌 */
@@ -32,6 +33,17 @@ export interface Schedule {
   monthdays: number[] | null   // monthly 반복 시 날짜 (1~31)
   sort_order: number
   created_at: string
+  closed_at: string | null
+}
+
+/** 오브젝트를 마칠 때 남기는 회고 */
+export interface ObjectClosureReview {
+  id: string
+  object_id: string
+  user_id: string
+  review: string
+  created_at: string
+  updated_at: string
 }
 
 /** 어떤 스케줄에 대하여, 하나의 due_date에 관한 완료 히스토리 */

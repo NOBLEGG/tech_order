@@ -1,21 +1,26 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
-import type { AppObject, Schedule, Interval } from '../types'
+import type { AppObject, Schedule, Interval, ObjectClosureReview } from '../types'
 
 interface DataContextValue {
   objects: AppObject[]
+  closedObjects: AppObject[]
   schedules: Schedule[]
+  objectClosureReviews: ObjectClosureReview[]
   loading: boolean
   addObject: (title: string) => Promise<void>
   updateObject: (id: string, patch: Partial<AppObject>) => Promise<void>
   deleteObject: (id: string) => Promise<void>
+  closeObject: (id: string, review: string) => Promise<boolean>
+  deleteClosedObject: (id: string) => Promise<boolean>
   addSchedule: (
     obj_id: string, title: string, intvl: Interval, start_date: string,
     parent_id?: string, weekdays?: number[], monthdays?: number[], end_date?: string
   ) => Promise<void>
   updateSchedule: (id: string, patch: Partial<Schedule>) => Promise<void>
   deleteSchedule: (id: string) => Promise<void>
+  closeSchedule: (id: string) => Promise<void>
   reorderSchedules: (ordered: Schedule[]) => Promise<void>
 }
 
@@ -24,7 +29,9 @@ const DataContext = createContext<DataContextValue>(null as any)
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
   const [objects, setObjects] = useState<AppObject[]>([])
+  const [closedObjects, setClosedObjects] = useState<AppObject[]>([])
   const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [objectClosureReviews, setObjectClosureReviews] = useState<ObjectClosureReview[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -34,12 +41,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchAll() {
     setLoading(true)
-    const [{ data: objs }, { data: schs }] = await Promise.all([
-      supabase.from('objects').select('*').order('sort_order'),
-      supabase.from('schedules').select('*').order('sort_order'),
+    const [{ data: objs }, { data: schs }, { data: closedObjs }, { data: reviews }] = await Promise.all([
+      supabase.from('objects').select('*').is('closed_at', null).order('sort_order'),
+      supabase.from('schedules').select('*').is('closed_at', null).order('sort_order'),
+      supabase.from('objects').select('*').not('closed_at', 'is', null).order('closed_at', { ascending: false }),
+      supabase.from('object_closure_reviews').select('*').order('created_at', { ascending: false }),
     ])
     setObjects(objs ?? [])
-    setSchedules(schs ?? [])
+    setClosedObjects(closedObjs ?? [])
+    setObjectClosureReviews(reviews ?? [])
+    const activeObjectIds = new Set((objs ?? []).map(o => o.id))
+    setSchedules((schs ?? []).filter(s => activeObjectIds.has(s.obj_id)))
     setLoading(false)
   }
 
@@ -64,6 +76,56 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     if (error) { console.error('deleteObject:', error); return }
     setObjects(prev => prev.filter(o => o.id !== id))
     setSchedules(prev => prev.filter(s => s.obj_id !== id))
+  }
+
+  async function closeObject(id: string, review: string) {
+    const obj = objects.find(o => o.id === id)
+    if (!obj) return false
+
+    const closedAt = new Date().toISOString()
+    const { data: reviewData, error: reviewError } = await supabase
+      .from('object_closure_reviews')
+      .upsert(
+        { object_id: id, user_id: user!.id, review: review.trim() },
+        { onConflict: 'object_id' }
+      )
+      .select()
+      .single()
+    if (reviewError) {
+      console.error('closeObject review:', reviewError)
+      return false
+    }
+
+    const { error } = await supabase
+      .from('objects')
+      .update({ closed_at: closedAt })
+      .eq('id', id)
+      .eq('user_id', user!.id)
+    if (error) { console.error('closeObject:', error); return false }
+
+    const closedObject = { ...obj, closed_at: closedAt }
+    setObjects(prev => prev.filter(o => o.id !== id))
+    setClosedObjects(prev => [closedObject, ...prev])
+    setSchedules(prev => prev.filter(s => s.obj_id !== id))
+    if (reviewData) {
+      setObjectClosureReviews(prev => [
+        reviewData,
+        ...prev.filter(r => r.object_id !== id),
+      ])
+    }
+    return true
+  }
+
+  async function deleteClosedObject(id: string) {
+    const { error } = await supabase.from('objects').delete().eq('id', id)
+    if (error) {
+      console.error('deleteClosedObject:', error)
+      return false
+    }
+
+    setClosedObjects(prev => prev.filter(o => o.id !== id))
+    setObjectClosureReviews(prev => prev.filter(r => r.object_id !== id))
+    return true
   }
 
   async function addSchedule(
@@ -104,6 +166,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setSchedules(prev => prev.filter(s => s.id !== id && s.parent_id !== id))
   }
 
+  async function closeSchedule(id: string) {
+    const closedAt = new Date().toISOString()
+    const { error } = await supabase.from('schedules').update({ closed_at: closedAt }).eq('id', id)
+    if (error) { console.error('closeSchedule:', error); return }
+    setSchedules(prev => prev.filter(s => s.id !== id))
+  }
+
   async function reorderSchedules(ordered: Schedule[]) {
     const updated = ordered.map((s, i) => ({ ...s, sort_order: i }))
     setSchedules(prev => {
@@ -118,9 +187,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      objects, schedules, loading,
-      addObject, updateObject, deleteObject,
-      addSchedule, updateSchedule, deleteSchedule, reorderSchedules,
+      objects, closedObjects, schedules, objectClosureReviews, loading,
+      addObject, updateObject, deleteObject, closeObject, deleteClosedObject,
+      addSchedule, updateSchedule, deleteSchedule, closeSchedule, reorderSchedules,
     }}>
       {children}
     </DataContext.Provider>

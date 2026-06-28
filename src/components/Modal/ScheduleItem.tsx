@@ -32,10 +32,18 @@ interface Props {
   depth: number
   onUpdate: (id: string, patch: Partial<Schedule>) => Promise<void>
   onDelete: (id: string) => Promise<void>
+  onCloseSchedule: (id: string) => Promise<void>
   children?: React.ReactNode
 }
 
-export default function ScheduleItem({ schedule, depth, onUpdate, onDelete, children }: Props) {
+export default function ScheduleItem({
+  schedule,
+  depth,
+  onUpdate,
+  onDelete,
+  onCloseSchedule,
+  children,
+}: Props) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [title, setTitle] = useState(schedule.title)
 
@@ -56,6 +64,11 @@ export default function ScheduleItem({ schedule, depth, onUpdate, onDelete, chil
     } else {
       setTitle(schedule.title)
     }
+  }
+
+  async function handleCloseSchedule() {
+    if (!window.confirm(`"${schedule.title}" 스케줄을 마칠까요?`)) return
+    await onCloseSchedule(schedule.id)
   }
 
   return (
@@ -81,7 +94,10 @@ export default function ScheduleItem({ schedule, depth, onUpdate, onDelete, chil
             value={title}
             onChange={e => setTitle(e.target.value)}
             onBlur={commitTitle}
-            onKeyDown={e => { if (e.key === 'Enter') commitTitle(); if (e.key === 'Escape') { setTitle(schedule.title); setEditingTitle(false) } }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitTitle()
+              if (e.key === 'Escape') { setTitle(schedule.title); setEditingTitle(false) }
+            }}
             className="flex-1 text-sm border-b border-blue-400 outline-none bg-transparent py-0.5"
           />
         ) : (
@@ -102,7 +118,14 @@ export default function ScheduleItem({ schedule, depth, onUpdate, onDelete, chil
           <span className="text-xs text-gray-400">{monthdayDisplay(schedule.intvl, schedule.monthdays)}</span>
         )}
 
-        {/* delete */}
+        {/* close / delete */}
+        <button
+          onClick={handleCloseSchedule}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-gray-300
+                     hover:text-gray-600 flex-shrink-0"
+        >
+          마침
+        </button>
         <button
           onClick={() => onDelete(schedule.id)}
           className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300

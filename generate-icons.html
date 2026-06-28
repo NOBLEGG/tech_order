@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Generate Icons</title></head>
+<body>
+<button onclick="generate()">아이콘 생성 & 다운로드</button>
+<script>
+function drawIcon(size) {
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const ctx = canvas.getContext('2d')
+
+  // 배경
+  ctx.fillStyle = '#111827'
+  ctx.fillRect(0, 0, size, size)
+
+  // 텍스트
+  ctx.fillStyle = '#ffffff'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `bold ${size * 0.38}px -apple-system, sans-serif`
+  ctx.fillText('TO', size / 2, size / 2)
+
+  return canvas
+}
+
+function download(canvas, filename) {
+  const a = document.createElement('a')
+  a.download = filename
+  a.href = canvas.toDataURL('image/png')
+  a.click()
+}
+
+function generate() {
+  download(drawIcon(192), 'icon-192.png')
+  setTimeout(() => download(drawIcon(512), 'icon-512.png'), 300)
+  alert('다운로드된 두 파일을 public/ 폴더에 넣어줘.')
+}
+</script>
+</body>
+</html>

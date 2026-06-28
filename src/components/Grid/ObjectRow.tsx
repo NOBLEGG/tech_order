@@ -20,7 +20,9 @@ export default function ObjectRow({
   onEdit,
 }: Props) {
   const [expanded, setExpanded] = useState(true)
-  const superSchedules = schedules.filter(s => s.obj_id === object.id && s.parent_id === null)
+  const objectSchedules = schedules.filter(s => s.obj_id === object.id)
+  const activeScheduleIds = new Set(objectSchedules.map(s => s.id))
+  const superSchedules = objectSchedules.filter(s => s.parent_id === null || !activeScheduleIds.has(s.parent_id))
     .sort((a, b) => a.sort_order - b.sort_order)
 
   return (

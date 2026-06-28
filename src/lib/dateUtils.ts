@@ -45,8 +45,10 @@ function isMonthDayMatch(date: Date, monthdays: number[]): boolean {
 export function isScheduleDueOn(schedule: Schedule, date: Date): boolean {
   const origin = startOfDay(parseISO(schedule.start_date))
   const end = schedule.end_date ? startOfDay(parseISO(schedule.end_date)) : null
+  const closedAt = schedule.closed_at ? startOfDay(parseISO(schedule.closed_at)) : null
 
   if (end && startOfDay(date) > end) return false
+  if (closedAt && startOfDay(date) > closedAt) return false
 
   if (schedule.intvl === 'daily') {
     return date >= origin

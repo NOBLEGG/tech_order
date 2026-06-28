@@ -150,7 +150,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
           </div>
         )}
 
-        {/* 시작일 / 마침일 */}
+        {/* 시작일 / 반복 종료일 */}
         {showStartDate && (
           <div className="flex items-center gap-2 flex-wrap">
             <input
@@ -167,7 +167,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
               value={endDate}
               min={startDate}
               onChange={e => setEndDate(e.target.value)}
-              aria-label="마침일"
+              aria-label="반복 종료일"
               className="text-xs border border-gray-200 rounded px-2 py-1 outline-none"
             />
             {endDate && (
@@ -175,7 +175,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
                 type="button"
                 onClick={() => setEndDate('')}
                 className="text-xs text-gray-300 hover:text-gray-500"
-                aria-label="마침일 초기화"
+                aria-label="반복 종료일 초기화"
               >
                 ✕
               </button>

@@ -23,6 +23,7 @@ export function useSchedules(objectIds: string[]) {
       .from('schedules')
       .select('*')
       .in('obj_id', objectIds)
+      .is('closed_at', null)
       .order('sort_order')
     setSchedules(data ?? [])
     setLoading(false)

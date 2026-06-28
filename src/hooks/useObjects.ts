@@ -18,6 +18,7 @@ export function useObjects() {
     const { data } = await supabase
       .from('objects')
       .select('*')
+      .is('closed_at', null)
       .order('sort_order')
     setObjects(data ?? [])
     setLoading(false)

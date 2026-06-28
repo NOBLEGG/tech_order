@@ -3,6 +3,7 @@ import { addMonths, subMonths, format, isToday, isSunday, isSaturday } from 'dat
 import ObjectRow from './ObjectRow'
 import AddObjectRow from './AddObjectRow'
 import CompletionModal from './CompletionModal'
+import HistoryPanel from '../History/HistoryPanel'
 import { useData } from '../../context/DataContext'
 import { useCompletions } from '../../hooks/useCompletions'
 import { getDaysInMonth, formatDisplayDate } from '../../lib/dateUtils'
@@ -16,11 +17,20 @@ interface ActiveCompletionCell {
 export default function Grid({ onEditObject }: { onEditObject: (id: string) => void }) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [activeCell, setActiveCell] = useState<ActiveCompletionCell | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
   const days = getDaysInMonth(currentDate)
 
-  const { objects, schedules, loading, addObject } = useData()
+  const {
+    objects,
+    closedObjects,
+    schedules,
+    objectClosureReviews,
+    loading,
+    addObject,
+    deleteClosedObject,
+  } = useData()
   const scheduleIds = schedules.map(s => s.id)
   const { getCompletion, saveCompletion, deleteCompletion } = useCompletions(scheduleIds, year, month)
   const activeCompletion = activeCell ? getCompletion(activeCell.schedule.id, activeCell.date) : undefined
@@ -40,6 +50,13 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
                 className="ml-2 text-xs text-gray-400 hover:text-gray-600 border border-gray-200
                            rounded px-2 py-0.5">
           오늘
+        </button>
+        <button
+          onClick={() => setHistoryOpen(true)}
+          className="ml-auto text-xs text-gray-400 hover:text-gray-600 border border-gray-200
+                     rounded px-2 py-0.5"
+        >
+          히스토리
         </button>
       </div>
 
@@ -95,6 +112,15 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
           onSave={saveCompletion}
           onDelete={deleteCompletion}
           onClose={() => setActiveCell(null)}
+        />
+      )}
+
+      {historyOpen && (
+        <HistoryPanel
+          objects={closedObjects}
+          reviews={objectClosureReviews}
+          onDeleteHistory={deleteClosedObject}
+          onClose={() => setHistoryOpen(false)}
         />
       )}
     </div>
