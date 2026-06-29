@@ -23,7 +23,7 @@ function getScheduleMode(schedule: Schedule): ScheduleMode {
   return schedule.schedule_mode === 'flexible' ? 'flexible' : 'specific'
 }
 
-export function getFlexiblePeriodBounds(intvl: Exclude<Interval, 'daily'>, date: Date) {
+export function getFlexiblePeriodBounds(intvl: Interval, date: Date) {
   switch (intvl) {
     case 'weekly':
       return { start: startOfWeek(date, { weekStartsOn: 0 }), end: endOfWeek(date, { weekStartsOn: 0 }) }
@@ -46,7 +46,7 @@ export function getFlexiblePeriodBounds(intvl: Exclude<Interval, 'daily'>, date:
   }
 }
 
-export function getFlexiblePeriodKey(intvl: Exclude<Interval, 'daily'>, date: Date) {
+export function getFlexiblePeriodKey(intvl: Interval, date: Date) {
   return `${intvl}:${formatDate(getFlexiblePeriodBounds(intvl, date).start)}`
 }
 
