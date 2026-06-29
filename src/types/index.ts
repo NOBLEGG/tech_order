@@ -20,6 +20,9 @@ export interface AppObject {
 /** 스케줄 인터벌 */
 export type Interval = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'semi_annual' | 'annual'
 
+/** 스케줄 반복 방식 */
+export type ScheduleMode = 'specific' | 'flexible'
+
 /** 어떤 AppObject에 대한 스케줄 */
 export interface Schedule {
   id: string
@@ -27,6 +30,7 @@ export interface Schedule {
   parent_id: string | null     // 하위 스케줄일 경우 부모 Schedule ID
   title: string
   intvl: Interval
+  schedule_mode?: ScheduleMode | null
   start_date: string
   end_date: string | null
   weekdays: number[] | null    // Weekly 인터벌일 때 (0=일 ~ 6=토)

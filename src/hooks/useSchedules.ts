@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import type { Schedule, Interval } from '../types'
+import type { Schedule, Interval, ScheduleMode } from '../types'
 
 export function useSchedules(objectIds: string[]) {
   const { user } = useAuth()
@@ -29,14 +29,27 @@ export function useSchedules(objectIds: string[]) {
     setLoading(false)
   }
 
-  async function addSchedule(obj_id: string, title: string, intvl: Interval, parent_id?: string) {
+  async function addSchedule(
+    obj_id: string,
+    title: string,
+    intvl: Interval,
+    parent_id?: string,
+    schedule_mode: ScheduleMode = 'specific',
+  ) {
     const siblings = schedules.filter(s =>
       s.obj_id === obj_id && (parent_id ? s.parent_id === parent_id : s.parent_id === null)
     )
     const maxOrder = siblings.length > 0 ? Math.max(...siblings.map(s => s.sort_order)) + 1 : 0
     const { data } = await supabase
       .from('schedules')
-      .insert({ obj_id, title, intvl, parent_id: parent_id ?? null, sort_order: maxOrder })
+      .insert({
+        obj_id,
+        title,
+        intvl,
+        schedule_mode,
+        parent_id: parent_id ?? null,
+        sort_order: maxOrder,
+      })
       .select()
       .single()
     if (data) setSchedules(prev => [...prev, data])

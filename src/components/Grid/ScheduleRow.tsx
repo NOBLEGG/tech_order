@@ -2,11 +2,13 @@ import { useState } from 'react'
 import Cell from './Cell'
 import type { Completion, Schedule } from '../../types'
 import { isAfter, isBefore, startOfDay } from 'date-fns'
+import { hasRealCompletionInPeriod } from '../../lib/dateUtils'
 
 interface Props {
   schedule: Schedule
   subSchedules: Schedule[]
   dates: Date[]
+  completions: Completion[]
   getCompletion: (scheduleId: string, date: Date) => Completion | undefined
   onOpenCompletion: (schedule: Schedule, date: Date) => void
   depth: number
@@ -18,6 +20,7 @@ export default function ScheduleRow({
   schedule,
   subSchedules,
   dates,
+  completions,
   getCompletion,
   onOpenCompletion,
   depth,
@@ -25,6 +28,7 @@ export default function ScheduleRow({
   const [expanded, setExpanded] = useState(true)
   const hasSubs = subSchedules.length > 0
   const indent = depth === 0 ? 'pl-4' : 'pl-8'
+  const isFlexible = schedule.schedule_mode === 'flexible'
 
   return (
     <>
@@ -46,15 +50,19 @@ export default function ScheduleRow({
         </td>
         {dates.map(date => {
           const isFuture = isAfter(startOfDay(date), today)
+          const completion = getCompletion(schedule.id, date)
+          const periodSatisfied = isFlexible ? hasRealCompletionInPeriod(schedule, date, completions) : false
 
           return (
             <Cell
               key={date.toISOString()}
               schedule={schedule}
               date={date}
-              completion={getCompletion(schedule.id, date)}
+              completion={completion}
               isPast={isBefore(startOfDay(date), today)}
               isFuture={isFuture}
+              isFlexible={isFlexible}
+              periodSatisfied={periodSatisfied}
               onOpen={() => onOpenCompletion(schedule, date)}
             />
           )
@@ -67,6 +75,7 @@ export default function ScheduleRow({
           schedule={sub}
           subSchedules={[]}
           dates={dates}
+          completions={completions}
           getCompletion={getCompletion}
           onOpenCompletion={onOpenCompletion}
           depth={depth + 1}

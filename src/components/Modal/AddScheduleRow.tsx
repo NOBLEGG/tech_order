@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import type { Interval } from '../../types'
+import type { Interval, ScheduleMode } from '../../types'
 import { formatDate } from '../../lib/dateUtils'
 
 const INTERVALS: { value: Interval; label: string }[] = [
@@ -16,9 +16,18 @@ const DAYS = Array.from({ length: 31 }, (_, i) => i + 1)
 const getToday = () => formatDate(new Date())
 
 const USE_MONTHDAYS: Interval[] = ['monthly', 'quarterly', 'semi_annual', 'annual']
+const FLEXIBLE_INTERVALS: Interval[] = ['weekly', 'monthly', 'quarterly', 'semi_annual', 'annual']
 
 interface Props {
-  onAdd: (title: string, intvl: Interval, start_date: string, weekdays?: number[], monthdays?: number[], end_date?: string) => void
+  onAdd: (
+    title: string,
+    intvl: Interval,
+    start_date: string,
+    schedule_mode?: ScheduleMode,
+    weekdays?: number[],
+    monthdays?: number[],
+    end_date?: string,
+  ) => void
   depth?: number
 }
 
@@ -26,6 +35,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [intvl, setIntvl] = useState<Interval>('monthly')
+  const [timingMode, setTimingMode] = useState<ScheduleMode>('specific')
   const [startDate, setStartDate] = useState(getToday())
   const [weekdays, setWeekdays] = useState<number[]>([])
   const [monthdays, setMonthdays] = useState<number[]>([])
@@ -38,9 +48,13 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   }
 
   function reset() {
-    setTitle(''); setIntvl('monthly'); setStartDate(getToday())
+    setTitle(''); setIntvl('monthly'); setTimingMode('specific'); setStartDate(getToday())
     setWeekdays([]); setMonthdays([]); setEndDate('')
     setOpen(false)
+  }
+
+  function supportsFlexibleTiming(interval: Interval) {
+    return FLEXIBLE_INTERVALS.includes(interval)
   }
 
   function toggleWeekday(day: number) {
@@ -53,21 +67,31 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
 
   function isValid() {
     if (!title.trim()) return false
-    if (intvl === 'weekly') return weekdays.length > 0
+    if (intvl === 'weekly' && timingMode === 'specific') return weekdays.length > 0
     return true
   }
 
   function commit() {
     if (!isValid()) return
     const ed = endDate || undefined
-    if (intvl === 'weekly') {
-      onAdd(title.trim(), intvl, startDate, weekdays, undefined, ed)
-    } else if (USE_MONTHDAYS.includes(intvl) && monthdays.length > 0) {
-      onAdd(title.trim(), intvl, startDate, undefined, monthdays, ed)
+    const scheduleMode = supportsFlexibleTiming(intvl) ? timingMode : 'specific'
+    if (intvl === 'weekly' && timingMode === 'specific') {
+      onAdd(title.trim(), intvl, startDate, scheduleMode, weekdays, undefined, ed)
+    } else if (USE_MONTHDAYS.includes(intvl) && timingMode === 'specific' && monthdays.length > 0) {
+      onAdd(title.trim(), intvl, startDate, scheduleMode, undefined, monthdays, ed)
     } else {
-      onAdd(title.trim(), intvl, startDate, undefined, undefined, ed)
+      onAdd(title.trim(), intvl, startDate, scheduleMode, undefined, undefined, ed)
     }
     reset()
+  }
+
+  function handleIntervalChange(value: Interval) {
+    setIntvl(value)
+    setWeekdays([])
+    setMonthdays([])
+    if (!supportsFlexibleTiming(value)) {
+      setTimingMode('specific')
+    }
   }
 
   function handleStartDateChange(value: string) {
@@ -76,13 +100,14 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && intvl !== 'weekly') commit()
+    if (e.key === 'Enter' && !(intvl === 'weekly' && timingMode === 'specific')) commit()
     if (e.key === 'Escape') reset()
   }
 
   const showStartDate = true
-  const showWeekdays = intvl === 'weekly'
-  const showMonthdays = USE_MONTHDAYS.includes(intvl)
+  const showFlexibleMode = supportsFlexibleTiming(intvl)
+  const showWeekdays = intvl === 'weekly' && timingMode === 'specific'
+  const showMonthdays = USE_MONTHDAYS.includes(intvl) && timingMode === 'specific'
   const selectedDay = parseInt(startDate.split('-')[2])
 
   if (!open) {
@@ -112,12 +137,39 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
         {/* interval */}
         <select
           value={intvl}
-          onChange={e => { setIntvl(e.target.value as Interval); setWeekdays([]); setMonthdays([]) }}
+          onChange={e => handleIntervalChange(e.target.value as Interval)}
           className="text-xs text-gray-500 border border-gray-200 rounded px-2 py-1 outline-none
                      bg-white self-start"
         >
           {INTERVALS.map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
         </select>
+
+        {showFlexibleMode && (
+          <div className="flex items-center gap-1 self-start">
+            <button
+              type="button"
+              onClick={() => setTimingMode('specific')}
+              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                timingMode === 'specific'
+                  ? 'bg-blue-50 border-blue-200 text-blue-600'
+                  : 'bg-white border-gray-200 text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              Specific
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimingMode('flexible')}
+              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                timingMode === 'flexible'
+                  ? 'bg-blue-50 border-blue-200 text-blue-600'
+                  : 'bg-white border-gray-200 text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              Anytime
+            </button>
+          </div>
+        )}
 
         {/* weekday 토글 */}
         {showWeekdays && (
@@ -182,7 +234,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
             )}
           </div>
         )}
-        {!showMonthdays && selectedDay >= 29 && (
+        {!showFlexibleMode && !showMonthdays && selectedDay >= 29 && (
           <span className="text-xs text-amber-400">
             29일 이상은 짧은 달에서 말일로 처리됩니다
           </span>

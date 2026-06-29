@@ -6,6 +6,7 @@ interface Props {
   object: AppObject
   schedules: Schedule[]
   dates: Date[]
+  completions: Completion[]
   getCompletion: (scheduleId: string, date: Date) => Completion | undefined
   onOpenCompletion: (schedule: Schedule, date: Date) => void
   onEdit: () => void
@@ -15,6 +16,7 @@ export default function ObjectRow({
   object,
   schedules,
   dates,
+  completions,
   getCompletion,
   onOpenCompletion,
   onEdit,
@@ -58,6 +60,7 @@ export default function ObjectRow({
           subSchedules={schedules.filter(sub => sub.parent_id === s.id)
             .sort((a, b) => a.sort_order - b.sort_order)}
           dates={dates}
+          completions={completions}
           getCompletion={getCompletion}
           onOpenCompletion={onOpenCompletion}
           depth={0}

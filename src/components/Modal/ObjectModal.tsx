@@ -7,7 +7,7 @@ import { useData } from '../../context/DataContext'
 import ScheduleItem from './ScheduleItem'
 import AddScheduleRow from './AddScheduleRow'
 import ReferenceSection from './ReferenceSection'
-import type { Interval } from '../../types'
+import type { Interval, ScheduleMode } from '../../types'
 
 interface Props {
   objectId: string
@@ -76,11 +76,12 @@ export default function ObjectModal({ objectId, onClose }: Props) {
     title: string,
     intvl: Interval,
     start_date: string,
+    scheduleMode: ScheduleMode = 'specific',
     weekdays?: number[],
     monthdays?: number[],
     end_date?: string
   ) {
-    addSchedule(objectId, title, intvl, start_date, undefined, weekdays, monthdays, end_date)
+    addSchedule(objectId, title, intvl, start_date, scheduleMode, undefined, weekdays, monthdays, end_date)
   }
 
   function handleAddSub(
@@ -88,11 +89,12 @@ export default function ObjectModal({ objectId, onClose }: Props) {
     title: string,
     intvl: Interval,
     start_date: string,
+    scheduleMode: ScheduleMode = 'specific',
     weekdays?: number[],
     monthdays?: number[],
     end_date?: string
   ) {
-    addSchedule(objectId, title, intvl, start_date, superId, weekdays, monthdays, end_date)
+    addSchedule(objectId, title, intvl, start_date, scheduleMode, superId, weekdays, monthdays, end_date)
   }
 
   async function handleCloseObject() {
@@ -185,7 +187,7 @@ export default function ObjectModal({ objectId, onClose }: Props) {
                     </DndContext>
                     <AddScheduleRow
                       depth={1}
-                      onAdd={(t, i, d, w, m, e) => handleAddSub(sup.id, t, i, d, w, m, e)}
+                      onAdd={(t, i, d, mode, w, m, e) => handleAddSub(sup.id, t, i, d, mode, w, m, e)}
                     />
                   </ScheduleItem>
                 )
@@ -193,7 +195,7 @@ export default function ObjectModal({ objectId, onClose }: Props) {
             </SortableContext>
           </DndContext>
 
-          <AddScheduleRow onAdd={(t, i, d, w, m, e) => handleAddSuper(t, i, d, w, m, e)} />
+          <AddScheduleRow onAdd={(t, i, d, mode, w, m, e) => handleAddSuper(t, i, d, mode, w, m, e)} />
         </div>
 
         {/* footer */}

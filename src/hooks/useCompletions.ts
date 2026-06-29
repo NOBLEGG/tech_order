@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { isToday, startOfDay } from 'date-fns'
+import { isToday, startOfDay, startOfWeek, endOfWeek, startOfYear, endOfYear } from 'date-fns'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Completion } from '../types'
 import { formatDate } from '../lib/dateUtils'
 import { encodeNoteOnlyMemo, isNoteOnlyMemo } from '../lib/completionMemo'
 
-export function useCompletions(scheduleIds: string[], year: number, month: number) {
+export function useCompletions(scheduleIds: string[], year: number) {
   const { user } = useAuth()
   const [completions, setCompletions] = useState<Completion[]>([])
 
@@ -16,19 +16,18 @@ export function useCompletions(scheduleIds: string[], year: number, month: numbe
       return
     }
     fetch()
-  }, [user, scheduleIds.join(','), year, month])
+  }, [user, scheduleIds.join(','), year])
 
   async function fetch() {
-    const from = `${year}-${String(month).padStart(2, '0')}-01`
-    const lastDay = new Date(year, month, 0).getDate()
-    const to = `${year}-${String(month).padStart(2, '0')}-${lastDay}`
+    const fromDate = startOfWeek(startOfYear(new Date(year, 0, 1)), { weekStartsOn: 0 })
+    const toDate = endOfWeek(endOfYear(new Date(year, 0, 1)), { weekStartsOn: 0 })
 
     const { data } = await supabase
       .from('completions')
       .select('*')
       .in('schedule_id', scheduleIds)
-      .gte('due_date', from)
-      .lte('due_date', to)
+      .gte('due_date', formatDate(fromDate))
+      .lte('due_date', formatDate(toDate))
     setCompletions(data ?? [])
   }
 

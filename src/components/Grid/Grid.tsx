@@ -19,7 +19,6 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
   const [activeCell, setActiveCell] = useState<ActiveCompletionCell | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
   const year = currentDate.getFullYear()
-  const month = currentDate.getMonth() + 1
   const days = getDaysInMonth(currentDate)
 
   const {
@@ -32,7 +31,7 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
     deleteClosedObject,
   } = useData()
   const scheduleIds = schedules.map(s => s.id)
-  const { getCompletion, saveCompletion, deleteCompletion } = useCompletions(scheduleIds, year, month)
+  const { completions, getCompletion, saveCompletion, deleteCompletion } = useCompletions(scheduleIds, year)
   const activeCompletion = activeCell ? getCompletion(activeCell.schedule.id, activeCell.date) : undefined
 
   return (
@@ -92,6 +91,7 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
                   object={obj}
                   schedules={schedules}
                   dates={days}
+                  completions={completions}
                   getCompletion={getCompletion}
                   onOpenCompletion={(schedule, date) => setActiveCell({ schedule, date })}
                   onEdit={() => onEditObject(obj.id)}

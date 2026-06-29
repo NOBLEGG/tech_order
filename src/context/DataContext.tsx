@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
-import type { AppObject, Schedule, Interval, ObjectClosureReview } from '../types'
+import type {
+  AppObject,
+  Schedule,
+  Interval,
+  ScheduleMode,
+  ObjectClosureReview,
+} from '../types'
 
 interface DataContextValue {
   objects: AppObject[]
@@ -16,7 +22,8 @@ interface DataContextValue {
   deleteClosedObject: (id: string) => Promise<boolean>
   addSchedule: (
     obj_id: string, title: string, intvl: Interval, start_date: string,
-    parent_id?: string, weekdays?: number[], monthdays?: number[], end_date?: string
+    schedule_mode?: ScheduleMode, parent_id?: string, weekdays?: number[],
+    monthdays?: number[], end_date?: string
   ) => Promise<void>
   updateSchedule: (id: string, patch: Partial<Schedule>) => Promise<void>
   deleteSchedule: (id: string) => Promise<void>
@@ -130,6 +137,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   async function addSchedule(
     obj_id: string, title: string, intvl: Interval, start_date: string,
+    schedule_mode: ScheduleMode = 'specific',
     parent_id?: string, weekdays?: number[], monthdays?: number[], end_date?: string
   ) {
     const siblings = schedules.filter(s =>
@@ -140,6 +148,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       .from('schedules')
       .insert({
         obj_id, title, intvl, start_date,
+        schedule_mode,
         end_date: end_date ?? null,
         weekdays: weekdays ?? null,
         monthdays: monthdays ?? null,

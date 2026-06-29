@@ -4,27 +4,40 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Schedule, Interval } from '../../types'
 
 const INTERVAL_LABELS: Record<Interval, string> = {
-  daily: 'D',
-  weekly: 'W',
-  monthly: 'M',
-  quarterly: 'Q',
-  semi_annual: 'S',
-  annual: 'A',
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  semi_annual: 'Semi-annual',
+  annual: 'Annual',
 }
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const FLEXIBLE_INTERVALS: Interval[] = ['weekly', 'monthly', 'quarterly', 'semi_annual', 'annual']
 
-function weekdayDisplay(weekdays: number[] | null) {
-  const label = INTERVAL_LABELS.weekly
-  if (!weekdays || weekdays.length === 0) return label
-  const days = [...weekdays].sort((a, b) => a - b).map(d => WEEKDAY_LABELS[d]).join(', ')
-  return `${label} · ${days}`
+function isFlexibleSchedule(schedule: Schedule) {
+  return schedule.schedule_mode === 'flexible'
 }
 
-function monthdayDisplay(intvl: Interval, monthdays: number[] | null) {
-  const label = INTERVAL_LABELS[intvl]
-  if (!monthdays || monthdays.length === 0) return label
-  const days = [...monthdays].sort((a, b) => a - b).join(', ')
+function formatScheduleLabel(schedule: Schedule) {
+  const label = INTERVAL_LABELS[schedule.intvl]
+
+  if (schedule.intvl === 'daily') {
+    return label
+  }
+
+  if (isFlexibleSchedule(schedule) && FLEXIBLE_INTERVALS.includes(schedule.intvl)) {
+    return `${label} · Anytime`
+  }
+
+  if (schedule.intvl === 'weekly') {
+    if (!schedule.weekdays || schedule.weekdays.length === 0) return label
+    const days = [...schedule.weekdays].sort((a, b) => a - b).map(d => WEEKDAY_LABELS[d]).join(', ')
+    return `${label} · ${days}`
+  }
+
+  if (!schedule.monthdays || schedule.monthdays.length === 0) return label
+  const days = [...schedule.monthdays].sort((a, b) => a - b).join(', ')
   return `${label} · ${days}`
 }
 
@@ -111,17 +124,7 @@ export default function ScheduleItem({
         )}
 
         {/* interval */}
-        {schedule.intvl === 'weekly' ? (
-          <span className="text-xs text-gray-400">
-            {weekdayDisplay(schedule.weekdays)}
-          </span>
-        ) : schedule.intvl === 'daily' ? (
-          <span className="text-xs text-gray-400">{INTERVAL_LABELS.daily}</span>
-        ) : (
-          <span className="text-xs text-gray-400">
-            {monthdayDisplay(schedule.intvl, schedule.monthdays)}
-          </span>
-        )}
+        <span className="text-xs text-gray-400">{formatScheduleLabel(schedule)}</span>
 
         {/* close / delete */}
         <button
