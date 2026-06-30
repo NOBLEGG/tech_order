@@ -4,10 +4,14 @@ import { DataProvider } from './context/DataContext'
 import LoginPage from './components/Auth/LoginPage'
 import Grid from './components/Grid/Grid'
 import ObjectModal from './components/Modal/ObjectModal'
+import FlexibleSchedulePrototype from './components/FlexibleSchedulePrototype'
 
 function AppInner() {
   const { user, loading, signOut } = useAuth()
   const [editingObjectId, setEditingObjectId] = useState<string | null>(null)
+  const isPrototype = new URLSearchParams(window.location.search).get('prototype') === 'flexible'
+
+  if (isPrototype) return <FlexibleSchedulePrototype />
 
   if (loading) {
     return (

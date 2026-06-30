@@ -8,8 +8,6 @@ interface Props {
   completion?: Completion
   isPast: boolean
   isFuture: boolean
-  isFlexible: boolean
-  periodSatisfied: boolean
   onOpen: () => void
 }
 
@@ -19,15 +17,12 @@ export default function Cell({
   completion,
   isPast,
   isFuture,
-  isFlexible,
-  periodSatisfied,
   onOpen,
 }: Props) {
   const due = isScheduleDueOn(schedule, date)
   const isCompleted = !!completion && !isNoteOnlyMemo(completion.memo)
   const memoText = decodeCompletionMemo(completion?.memo)
   const hasMemo = !!memoText.trim()
-  const locked = isFlexible && periodSatisfied && !isCompleted
 
   if (!due) {
     return <td className="border-r border-gray-100 w-10 min-w-[2.5rem]" />
@@ -36,21 +31,18 @@ export default function Cell({
   return (
     <td className="border-r border-gray-100 w-10 min-w-[2.5rem] text-center">
       <button
-        onClick={isFuture || locked ? undefined : onOpen}
-        disabled={isFuture || locked}
-        title={locked
-          ? '이미 같은 기간에서 완료되었습니다.'
-          : isFuture
-            ? '미래 일정은 수정할 수 없습니다.'
-            : hasMemo
-              ? memoText
-              : '완료 메모 열기'}
+        onClick={isFuture ? undefined : onOpen}
+        disabled={isFuture}
+        title={isFuture
+          ? '미래 일정은 수정할 수 없습니다.'
+          : hasMemo
+            ? memoText
+            : '완료 메모 열기'}
         className="relative w-5 h-5 rounded border flex items-center justify-center mx-auto
                    transition-colors disabled:cursor-not-allowed disabled:opacity-60"
         style={{
-          borderColor: isCompleted ? '#4ade80' : locked ? '#d1d5db' : isPast ? '#fca5a5' : '#d1d5db',
+          borderColor: isCompleted ? '#4ade80' : isPast ? '#fca5a5' : '#d1d5db',
           backgroundColor: isCompleted ? '#4ade80' : 'transparent',
-          opacity: locked ? 0.35 : 1,
         }}
       >
         {isCompleted && (
@@ -58,7 +50,7 @@ export default function Cell({
             <path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
-        {hasMemo && !locked && (
+        {hasMemo && !isFuture && (
           <span className="absolute -right-0.5 -top-0.5 w-1.5 h-1.5 rounded-full bg-blue-400" />
         )}
       </button>
