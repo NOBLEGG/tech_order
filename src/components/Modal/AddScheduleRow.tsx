@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { parseISO } from 'date-fns'
 import type { Interval, ScheduleMode } from '../../types'
-import { formatDate } from '../../lib/dateUtils'
+import { advanceScheduleDate, formatDate } from '../../lib/dateUtils'
 
 const INTERVALS: { value: Interval; label: string }[] = [
   { value: 'daily',       label: 'Daily' },
@@ -57,6 +58,12 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
     return FLEXIBLE_INTERVALS.includes(interval)
   }
 
+  const minEndDate = intvl === 'daily'
+    ? startDate
+    : intvl === 'monthly'
+      ? startDate
+    : formatDate(advanceScheduleDate(parseISO(startDate), intvl, 1))
+
   function toggleWeekday(day: number) {
     setWeekdays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])
   }
@@ -68,6 +75,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   function isValid() {
     if (!title.trim()) return false
     if (intvl === 'weekly' && timingMode === 'specific') return weekdays.length > 0
+    if (endDate && endDate < minEndDate) return false
     return true
   }
 
@@ -98,6 +106,12 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
     if (value < getToday()) return
     setStartDate(value)
   }
+
+  useEffect(() => {
+    if (endDate && endDate < minEndDate) {
+      setEndDate('')
+    }
+  }, [endDate, minEndDate])
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !(intvl === 'weekly' && timingMode === 'specific')) commit()
@@ -217,7 +231,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
             <input
               type="date"
               value={endDate}
-              min={startDate}
+              min={minEndDate}
               onChange={e => setEndDate(e.target.value)}
               aria-label="반복 종료일"
               className="text-xs border border-gray-200 rounded px-2 py-1 outline-none"
@@ -233,6 +247,11 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
               </button>
             )}
           </div>
+        )}
+        {intvl !== 'daily' && (
+          <p className="text-xs text-amber-400">
+            종료일은 시작일 이후로만 선택할 수 있습니다.
+          </p>
         )}
         {!showFlexibleMode && !showMonthdays && selectedDay >= 29 && (
           <span className="text-xs text-amber-400">

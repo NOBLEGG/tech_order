@@ -24,6 +24,10 @@ function getScheduleMode(schedule: Schedule): ScheduleMode {
   return schedule.schedule_mode === 'flexible' ? 'flexible' : 'specific'
 }
 
+export function advanceScheduleDate(date: Date, interval: Interval, n: number): Date {
+  return advanceN(interval, date, n)
+}
+
 function parseScheduleDate(value: string | null | undefined): Date | null {
   if (!value) return null
 
@@ -272,10 +276,6 @@ function advanceN(interval: Interval, origin: Date, n: number): Date {
   }
 }
 
-const MONTHS_PER_INTERVAL: Partial<Record<Interval, number>> = {
-  monthly: 1, quarterly: 3, semi_annual: 6, annual: 12,
-}
-
 function isMonthDayMatch(date: Date, monthdays: number[]): boolean {
   const day = getDate(date)
   const lastDay = endOfMonth(date).getDate()
@@ -283,6 +283,19 @@ function isMonthDayMatch(date: Date, monthdays: number[]): boolean {
   // 말일 처리: 이 달의 마지막 날이고, monthdays 중 이 달 일수를 초과하는 값이 있으면
   if (day === lastDay && monthdays.some(d => d > lastDay)) return true
   return false
+}
+
+function getMonthdayTargetMonth(intvl: Interval, origin: Date, day: Date) {
+  if (intvl === 'monthly') {
+    return startOfMonth(day)
+  }
+
+  let nextBoundary = advanceN(intvl, origin, 1)
+  while (nextBoundary <= day) {
+    nextBoundary = advanceN(intvl, nextBoundary, 1)
+  }
+
+  return addMonths(startOfMonth(nextBoundary), -1)
 }
 
 export function isScheduleDueOn(schedule: Schedule, date: Date): boolean {
@@ -314,10 +327,11 @@ export function isScheduleDueOn(schedule: Schedule, date: Date): boolean {
   if (day < origin) return false
 
   if (schedule.monthdays && schedule.monthdays.length > 0) {
-    const monthsPerInterval = MONTHS_PER_INTERVAL[schedule.intvl] ?? 1
-    const monthsElapsed =
-      (getYear(day) - getYear(origin)) * 12 + (getMonth(day) - getMonth(origin))
-    if (monthsElapsed < 0 || monthsElapsed % monthsPerInterval !== 0) return false
+    if (schedule.intvl === 'monthly') {
+      return isMonthDayMatch(day, schedule.monthdays)
+    }
+    const targetMonth = getMonthdayTargetMonth(schedule.intvl, origin, day)
+    if (getYear(targetMonth) !== getYear(day) || getMonth(targetMonth) !== getMonth(day)) return false
     return isMonthDayMatch(day, schedule.monthdays)
   }
 
