@@ -33,17 +33,16 @@ function formatStatus(segment: FlexibleScheduleSegment, today: Date) {
     case 'completed':
       return `완료: ${format(parseISO(segment.completion!.due_date), 'M/d')}`
     case 'missed': {
-      const overdueDays = Math.max(1, differenceInCalendarDays(today, segment.periodEnd))
-      return `${overdueDays}일 지남`
+      return `놓침`
     }
     case 'future': {
-      if (!segment.showCountdown) return '예정'
+      if (!segment.showCountdown) return ''
       const untilStart = Math.max(1, differenceInCalendarDays(segment.periodStart, today))
-      return `시작까지 ${untilStart}일`
+      return `시작까지 ${untilStart}d`
     }
     case 'active': {
       const remainingDays = differenceInCalendarDays(segment.periodEnd, today)
-      return remainingDays <= 0 ? '오늘까지' : `${remainingDays}일 남음`
+      return remainingDays <= 0 ? '오늘까지' : `${remainingDays}d 남음`
     }
     default:
       return ''
@@ -89,15 +88,6 @@ export default function FlexiblePeriodCell({ segment, onOpen }: Props) {
           <span className="truncate font-medium">{rangeLabel}</span>
           <span className="shrink-0 opacity-70">·</span>
           <span className="shrink-0">{statusLabel}</span>
-          <span className="ml-auto shrink-0 rounded-full bg-white/70 px-1.5 text-[9px] font-medium">
-            {segment.status === 'active'
-              ? `${segment.urgencyLevel}/7`
-              : segment.status === 'completed'
-                ? '완료'
-                : segment.status === 'missed'
-                  ? '놓침'
-                  : '예정'}
-          </span>
         </div>
       </button>
     </td>
