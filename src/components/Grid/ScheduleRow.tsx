@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Cell from './Cell'
 import FlexiblePeriodCell from './FlexiblePeriodCell'
 import type { Completion, Schedule } from '../../types'
@@ -22,26 +21,33 @@ function getScheduleBadge(schedule: Schedule) {
 
 interface Props {
   schedule: Schedule
-  subSchedules: Schedule[]
+  allSchedules: Schedule[]
   dates: Date[]
   completions: Completion[]
   getCompletion: (scheduleId: string, date: Date) => Completion | undefined
   onOpenCompletion: (schedule: Schedule, date: Date) => void
   depth: number
+  scheduleExpanded: Record<string, boolean>
+  onToggleExpanded: (scheduleId: string) => void
 }
 
 const today = startOfDay(new Date())
 
 export default function ScheduleRow({
   schedule,
-  subSchedules,
+  allSchedules,
   dates,
   completions,
   getCompletion,
   onOpenCompletion,
   depth,
+  scheduleExpanded,
+  onToggleExpanded,
 }: Props) {
-  const [expanded, setExpanded] = useState(true)
+  const expanded = scheduleExpanded[schedule.id] ?? true
+  const subSchedules = allSchedules
+    .filter(sub => sub.parent_id === schedule.id)
+    .sort((a, b) => a.sort_order - b.sort_order)
   const hasSubs = subSchedules.length > 0
   const indent = depth === 0 ? 'pl-4' : 'pl-8'
   const isFlexible = schedule.schedule_mode === 'flexible'
@@ -121,7 +127,11 @@ export default function ScheduleRow({
                         text-xs text-gray-600 whitespace-nowrap ${indent} pr-2 py-1.5 min-w-[180px] max-w-[240px]`}>
           <div className="flex items-center gap-1">
             {hasSubs && (
-              <button onClick={() => setExpanded(e => !e)} className="text-gray-300 hover:text-gray-500 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => onToggleExpanded(schedule.id)}
+                className="flex-shrink-0 text-gray-300 hover:text-gray-500"
+              >
                 <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"
                      style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
                   <path d="M3 2l4 3-4 3V2z" />
@@ -142,12 +152,14 @@ export default function ScheduleRow({
         <ScheduleRow
           key={sub.id}
           schedule={sub}
-          subSchedules={[]}
+          allSchedules={allSchedules}
           dates={dates}
           completions={completions}
           getCompletion={getCompletion}
           onOpenCompletion={onOpenCompletion}
           depth={depth + 1}
+          scheduleExpanded={scheduleExpanded}
+          onToggleExpanded={onToggleExpanded}
         />
       ))}
     </>
