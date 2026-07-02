@@ -24,10 +24,10 @@ interface DataContextValue {
     obj_id: string, title: string, intvl: Interval, start_date: string,
     schedule_mode?: ScheduleMode, parent_id?: string, weekdays?: number[],
     monthdays?: number[], end_date?: string
-  ) => Promise<void>
-  updateSchedule: (id: string, patch: Partial<Schedule>) => Promise<void>
-  deleteSchedule: (id: string) => Promise<void>
-  closeSchedule: (id: string) => Promise<void>
+  ) => Promise<Schedule | null>
+  updateSchedule: (id: string, patch: Partial<Schedule>) => Promise<Schedule | null>
+  deleteSchedule: (id: string) => Promise<boolean>
+  closeSchedule: (id: string) => Promise<boolean>
   reorderSchedules: (ordered: Schedule[]) => Promise<void>
 }
 
@@ -139,7 +139,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     obj_id: string, title: string, intvl: Interval, start_date: string,
     schedule_mode: ScheduleMode = 'specific',
     parent_id?: string, weekdays?: number[], monthdays?: number[], end_date?: string
-  ) {
+  ): Promise<Schedule | null> {
     const siblings = schedules.filter(s =>
       s.obj_id === obj_id && (parent_id ? s.parent_id === parent_id : s.parent_id === null)
     )
@@ -156,30 +156,34 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         sort_order: maxOrder,
       })
       .select().single()
-    if (error) { console.error('addSchedule:', error); return }
+    if (error) { console.error('addSchedule:', error); return null }
     if (data) setSchedules(prev => [...prev, data])
+    return data ?? null
   }
 
-  async function updateSchedule(id: string, patch: Partial<Schedule>) {
+  async function updateSchedule(id: string, patch: Partial<Schedule>): Promise<Schedule | null> {
     if (patch.intvl) {
       await supabase.from('completions').delete().eq('schedule_id', id)
     }
     const { data, error } = await supabase.from('schedules').update(patch).eq('id', id).select().single()
-    if (error) { console.error('updateSchedule:', error); return }
+    if (error) { console.error('updateSchedule:', error); return null }
     if (data) setSchedules(prev => prev.map(s => s.id === id ? data : s))
+    return data ?? null
   }
 
-  async function deleteSchedule(id: string) {
+  async function deleteSchedule(id: string): Promise<boolean> {
     const { error } = await supabase.from('schedules').delete().eq('id', id)
-    if (error) { console.error('deleteSchedule:', error); return }
+    if (error) { console.error('deleteSchedule:', error); return false }
     setSchedules(prev => prev.filter(s => s.id !== id && s.parent_id !== id))
+    return true
   }
 
-  async function closeSchedule(id: string) {
+  async function closeSchedule(id: string): Promise<boolean> {
     const closedAt = new Date().toISOString()
     const { error } = await supabase.from('schedules').update({ closed_at: closedAt }).eq('id', id)
-    if (error) { console.error('closeSchedule:', error); return }
+    if (error) { console.error('closeSchedule:', error); return false }
     setSchedules(prev => prev.filter(s => s.id !== id))
+    return true
   }
 
   async function reorderSchedules(ordered: Schedule[]) {

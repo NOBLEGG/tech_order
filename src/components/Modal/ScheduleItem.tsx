@@ -44,9 +44,9 @@ function formatScheduleLabel(schedule: Schedule) {
 interface Props {
   schedule: Schedule
   depth: number
-  onUpdate: (id: string, patch: Partial<Schedule>) => Promise<void>
-  onDelete: (id: string) => Promise<void>
-  onCloseSchedule: (id: string) => Promise<void>
+  onUpdate: (id: string, patch: Partial<Schedule>) => void | Promise<void>
+  onDelete: (id: string) => void | Promise<void>
+  onCloseSchedule: (id: string) => void | Promise<void>
   children?: React.ReactNode
 }
 
