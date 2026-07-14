@@ -4,6 +4,7 @@ import ObjectRow from './ObjectRow'
 import AddObjectRow from './AddObjectRow'
 import CompletionModal from './CompletionModal'
 import HistoryPanel from '../History/HistoryPanel'
+import TrashPanel from '../Trash/TrashPanel'
 import { useData } from '../../context/DataContext'
 import { useCompletions } from '../../hooks/useCompletions'
 import { getDaysInMonth, formatDisplayDate } from '../../lib/dateUtils'
@@ -43,6 +44,7 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
   const [currentDate, setCurrentDate] = useState(new Date())
   const [activeCell, setActiveCell] = useState<ActiveCompletionCell | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [trashOpen, setTrashOpen] = useState(false)
   const [objectExpanded, setObjectExpanded] = useState<Record<string, boolean>>(
     () => readExpandedMap(OBJECT_EXPANDED_STORAGE_KEY),
   )
@@ -56,12 +58,22 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
   const {
     objects,
     closedObjects,
+    trashedObjects,
     schedules,
+    trashedSchedules,
     objectClosureReviews,
     loading,
     addObject,
-    deleteClosedObject,
+    restoreClosedObject,
+    restoreTrashedObject,
+    restoreTrashedSchedule,
+    purgeTrashedObject,
+    purgeTrashedSchedule,
   } = useData()
+  const allObjects = useMemo(
+    () => [...objects, ...closedObjects, ...trashedObjects],
+    [objects, closedObjects, trashedObjects],
+  )
   const objectIds = useMemo(() => objects.map(object => object.id), [objects])
   const scheduleIds = useMemo(() => schedules.map(schedule => schedule.id), [schedules])
   const { completions, getCompletion, saveCompletion, deleteCompletion } = useCompletions(scheduleIds, year)
@@ -120,10 +132,22 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
           오늘
         </button>
         <button
-          onClick={() => setHistoryOpen(true)}
+          onClick={() => {
+            setTrashOpen(false)
+            setHistoryOpen(true)
+          }}
           className="ml-auto rounded border border-gray-200 px-2 py-0.5 text-xs text-gray-400 hover:text-gray-600"
         >
           히스토리
+        </button>
+        <button
+          onClick={() => {
+            setHistoryOpen(false)
+            setTrashOpen(true)
+          }}
+          className="rounded border border-gray-200 px-2 py-0.5 text-xs text-gray-400 hover:text-gray-600"
+        >
+          휴지통
         </button>
       </div>
 
@@ -263,8 +287,21 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
         <HistoryPanel
           objects={closedObjects}
           reviews={objectClosureReviews}
-          onDeleteHistory={deleteClosedObject}
+          onRestoreHistory={restoreClosedObject}
           onClose={() => setHistoryOpen(false)}
+        />
+      )}
+
+      {trashOpen && (
+        <TrashPanel
+          objects={allObjects}
+          trashedObjects={trashedObjects}
+          trashedSchedules={trashedSchedules}
+          onRestoreObject={restoreTrashedObject}
+          onRestoreSchedule={restoreTrashedSchedule}
+          onPurgeObject={purgeTrashedObject}
+          onPurgeSchedule={purgeTrashedSchedule}
+          onClose={() => setTrashOpen(false)}
         />
       )}
     </div>

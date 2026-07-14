@@ -4,7 +4,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { useData } from '../../context/DataContext'
-import ScheduleItem from './ScheduleItem'
+import ScheduleItem, { formatScheduleLabel } from './ScheduleItem'
 import AddScheduleRow from './AddScheduleRow'
 import ReferenceSection from './ReferenceSection'
 import type { Interval, Schedule, ScheduleMode } from '../../types'
@@ -75,6 +75,7 @@ function createTempSchedule(
     sort_order: sortOrder,
     created_at: new Date().toISOString(),
     closed_at: null,
+    trashed_at: null,
   }
 }
 
@@ -85,8 +86,8 @@ interface Props {
 
 export default function ObjectModal({ objectId, onClose }: Props) {
   const {
-    objects, schedules, updateObject, deleteObject, closeObject,
-    addSchedule, updateSchedule, deleteSchedule, closeSchedule,
+    objects, schedules, closedSchedules, updateObject, deleteObject, closeObject,
+    addSchedule, updateSchedule, deleteSchedule, closeSchedule, restoreClosedSchedule,
   } = useData()
 
   const obj = objects.find(o => o.id === objectId)
@@ -107,7 +108,9 @@ export default function ObjectModal({ objectId, onClose }: Props) {
   useEffect(() => { setTitleValue(obj?.title ?? '') }, [obj?.title])
   useEffect(() => {
     if (!obj || scheduleDirty) return
-    const base = cloneSchedules(schedules.filter(s => s.obj_id === objectId && s.closed_at === null))
+    const base = cloneSchedules(
+      schedules.filter(s => s.obj_id === objectId && s.closed_at === null && s.trashed_at === null),
+    )
     initialSchedulesRef.current = base
     setDraftSchedules(base)
   }, [obj, objectId, schedules, scheduleDirty])
@@ -116,6 +119,9 @@ export default function ObjectModal({ objectId, onClose }: Props) {
   const activeScheduleIds = new Set(activeDraftSchedules.map(s => s.id))
   const superSchedules = activeDraftSchedules
     .filter(s => s.parent_id === null || !activeScheduleIds.has(s.parent_id))
+    .sort((a, b) => a.sort_order - b.sort_order)
+  const closedObjectSchedules = closedSchedules
+    .filter(schedule => schedule.obj_id === objectId && schedule.trashed_at === null)
     .sort((a, b) => a.sort_order - b.sort_order)
 
   if (!obj) return null
@@ -344,6 +350,13 @@ export default function ObjectModal({ objectId, onClose }: Props) {
     }
   }
 
+  async function handleRestoreClosedSchedule(scheduleId: string) {
+    const restored = await restoreClosedSchedule(scheduleId)
+    if (!restored) {
+      setScheduleError('마친 스케줄을 복원하지 못했습니다. 다시 시도해 주세요.')
+    }
+  }
+
   async function handleCloseObject() {
     if (!closeReview.trim()) return
     setSavingClose(true)
@@ -443,6 +456,32 @@ export default function ObjectModal({ objectId, onClose }: Props) {
           </DndContext>
 
           <AddScheduleRow onAdd={(t, i, d, mode, w, m, e) => handleAddSuper(t, i, d, mode, w, m, e)} />
+
+          {closedObjectSchedules.length > 0 && (
+            <div className="mt-4 border-t border-gray-100 pt-4">
+              <p className="mb-2 text-xs font-medium text-gray-400">마친 스케줄</p>
+              <div className="space-y-2">
+                {closedObjectSchedules.map(schedule => (
+                  <div
+                    key={schedule.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-gray-700">{schedule.title}</p>
+                      <p className="text-xs text-gray-400">{formatScheduleLabel(schedule)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRestoreClosedSchedule(schedule.id)}
+                      className="flex-shrink-0 text-xs text-blue-500 hover:text-blue-700"
+                    >
+                      복원
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
           {scheduleError && (
@@ -458,10 +497,14 @@ export default function ObjectModal({ objectId, onClose }: Props) {
               오브젝트 마침
             </button>
             <button
-              onClick={async () => { await deleteObject(objectId); onClose() }}
+              onClick={async () => {
+                if (!window.confirm(`"${obj.title}" 오브젝트를 휴지통으로 옮길까요?`)) return
+                await deleteObject(objectId)
+                onClose()
+              }}
               className="text-xs text-red-300 hover:text-red-500"
             >
-              삭제
+              휴지통
             </button>
           </div>
           <div className="flex items-center gap-2">
