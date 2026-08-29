@@ -5,7 +5,7 @@ import type { AppObject, ObjectClosureReview } from '../../types'
 interface Props {
   objects: AppObject[]
   reviews: ObjectClosureReview[]
-  onDeleteHistory: (id: string) => Promise<boolean>
+  onRestoreHistory: (id: string) => Promise<boolean>
   onClose: () => void
 }
 
@@ -14,23 +14,23 @@ function formatClosedAt(value: string | null) {
   return format(parseISO(value), 'yyyy년 M월 d일')
 }
 
-export default function HistoryPanel({ objects, reviews, onDeleteHistory, onClose }: Props) {
+export default function HistoryPanel({ objects, reviews, onRestoreHistory, onClose }: Props) {
   const [selectedId, setSelectedId] = useState(objects[0]?.id ?? null)
   const selected = objects.find(o => o.id === selectedId) ?? objects[0]
   const selectedReview = selected ? reviews.find(r => r.object_id === selected.id) : undefined
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleDelete() {
+  async function handleRestore() {
     if (!selected) return
-    if (!window.confirm(`"${selected.title}" 히스토리를 삭제할까요?`)) return
+    if (!window.confirm(`"${selected.title}" 오브젝트를 다시 이어갈까요?`)) return
 
     setDeleting(true)
     setError(null)
-    const succeeded = await onDeleteHistory(selected.id)
+    const succeeded = await onRestoreHistory(selected.id)
     setDeleting(false)
     if (!succeeded) {
-      setError('히스토리를 삭제하지 못했습니다. 권한과 정책을 확인해 주세요.')
+      setError('오브젝트를 다시 열지 못했습니다. 잠시 후 다시 시도해 주세요.')
       return
     }
 
@@ -119,11 +119,11 @@ export default function HistoryPanel({ objects, reviews, onDeleteHistory, onClos
                   </div>
                   <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
                     <button
-                      onClick={handleDelete}
+                      onClick={handleRestore}
                       disabled={!selected || deleting}
-                      className="text-xs text-red-300 hover:text-red-500 disabled:opacity-50"
+                      className="text-xs text-blue-500 hover:text-blue-700 disabled:opacity-50"
                     >
-                      {deleting ? '삭제 중...' : '히스토리 삭제'}
+                      {deleting ? '복원 중...' : '다시 이어가기'}
                     </button>
                   </div>
                   {error && (

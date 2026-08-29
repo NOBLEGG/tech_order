@@ -19,7 +19,7 @@ function isFlexibleSchedule(schedule: Schedule) {
   return schedule.schedule_mode === 'flexible'
 }
 
-function formatScheduleLabel(schedule: Schedule) {
+export function formatScheduleLabel(schedule: Schedule) {
   const label = INTERVAL_LABELS[schedule.intvl]
 
   if (schedule.intvl === 'daily') {
@@ -85,6 +85,11 @@ export default function ScheduleItem({
     await onCloseSchedule(schedule.id)
   }
 
+  async function handleDeleteSchedule() {
+    if (!window.confirm(`"${schedule.title}" 스케줄을 휴지통으로 옮길까요?`)) return
+    await onDelete(schedule.id)
+  }
+
   return (
     <div ref={setNodeRef} style={style} className={depth === 1 ? 'ml-6' : ''}>
       <div className="flex items-center gap-2 py-1.5 group">
@@ -135,9 +140,10 @@ export default function ScheduleItem({
           마침
         </button>
         <button
-          onClick={() => onDelete(schedule.id)}
+          onClick={handleDeleteSchedule}
           className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300
                      hover:text-red-400 flex-shrink-0"
+          aria-label="휴지통"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />

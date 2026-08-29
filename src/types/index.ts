@@ -15,6 +15,7 @@ export interface AppObject {
   sort_order: number
   created_at: string
   closed_at: string | null
+  trashed_at: string | null
 }
 
 /** 스케줄 인터벌 */
@@ -38,6 +39,7 @@ export interface Schedule {
   sort_order: number
   created_at: string
   closed_at: string | null
+  trashed_at: string | null
 }
 
 /** 오브젝트를 마칠 때 남기는 회고 */
