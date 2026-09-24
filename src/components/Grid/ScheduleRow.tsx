@@ -125,7 +125,7 @@ export default function ScheduleRow({
   return (
     <>
       <tr className="hover:bg-gray-50 group">
-        <td className={`border-r border-b border-gray-100 sticky left-0 bg-white group-hover:bg-gray-50
+        <td className={`border-r border-b border-gray-100 sticky left-0 z-10 bg-white group-hover:bg-gray-50
                         text-xs text-gray-600 whitespace-nowrap ${indent} pr-2 py-1.5 min-w-[180px] max-w-[240px]`}>
           <div className="flex items-center gap-1">
             {hasSubs && (

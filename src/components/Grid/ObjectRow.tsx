@@ -38,7 +38,7 @@ export default function ObjectRow({
   return (
     <>
       <tr className="bg-gray-50 group">
-        <td className="border-r border-b border-gray-200 sticky left-0 bg-gray-50
+        <td className="border-r border-b border-gray-200 sticky left-0 z-10 bg-gray-50
                        font-medium text-sm text-gray-800 whitespace-nowrap pl-2 pr-2 py-2
                        min-w-[180px] max-w-[240px]">
           <div className="flex items-center gap-1">
