@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { addMonths, subMonths, format, isToday, isSunday, isSaturday } from 'date-fns'
 import ObjectRow from './ObjectRow'
-import AddObjectRow from './AddObjectRow'
 import CompletionModal from './CompletionModal'
+import CreateObjectModal from '../Modal/CreateObjectModal'
+import ScheduleModal from '../Modal/ScheduleModal'
 import HistoryPanel from '../History/HistoryPanel'
 import TrashPanel from '../Trash/TrashPanel'
 import { useData } from '../../context/DataContext'
@@ -45,6 +46,8 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
   const [activeCell, setActiveCell] = useState<ActiveCompletionCell | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [trashOpen, setTrashOpen] = useState(false)
+  const [creatingObject, setCreatingObject] = useState(false)
+  const [openScheduleId, setOpenScheduleId] = useState<string | null>(null)
   const [objectExpanded, setObjectExpanded] = useState<Record<string, boolean>>(
     () => readExpandedMap(OBJECT_EXPANDED_STORAGE_KEY),
   )
@@ -170,6 +173,28 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
                     <div className="ml-auto flex items-center gap-1">
                       <button
                         type="button"
+                        onClick={() => setCreatingObject(true)}
+                        aria-label="오브젝트 추가"
+                        title="오브젝트 추가"
+                        className="rounded p-0.5 text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M6 2v8M2 6h8" />
+                        </svg>
+                      </button>
+                      <span className="mx-0.5 h-3 w-px bg-gray-200" />
+                      <button
+                        type="button"
                         onClick={handleExpandAll}
                         disabled={!hasRows || allExpanded}
                         aria-label="전체 펼치기"
@@ -248,6 +273,7 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
                   completions={completions}
                   getCompletion={getCompletion}
                   onOpenCompletion={(schedule, date) => setActiveCell({ schedule, date })}
+                  onOpenSchedule={setOpenScheduleId}
                   onEdit={() => onEditObject(obj.id)}
                   expanded={objectExpanded[obj.id] ?? true}
                   onToggleExpanded={() => {
@@ -265,11 +291,21 @@ export default function Grid({ onEditObject }: { onEditObject: (id: string) => v
                   }}
                 />
               ))}
-              <AddObjectRow colCount={days.length} onAdd={addObject} />
             </tbody>
           </table>
         )}
       </div>
+
+      {creatingObject && (
+        <CreateObjectModal
+          onCreate={addObject}
+          onClose={() => setCreatingObject(false)}
+        />
+      )}
+
+      {openScheduleId && (
+        <ScheduleModal scheduleId={openScheduleId} onClose={() => setOpenScheduleId(null)} />
+      )}
 
       {activeCell && (
         <CompletionModal

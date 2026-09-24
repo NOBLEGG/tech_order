@@ -8,6 +8,7 @@ interface Props {
   completions: Completion[]
   getCompletion: (scheduleId: string, date: Date) => Completion | undefined
   onOpenCompletion: (schedule: Schedule, date: Date) => void
+  onOpenSchedule: (scheduleId: string) => void
   onEdit: () => void
   expanded: boolean
   onToggleExpanded: () => void
@@ -22,6 +23,7 @@ export default function ObjectRow({
   completions,
   getCompletion,
   onOpenCompletion,
+  onOpenSchedule,
   onEdit,
   expanded,
   onToggleExpanded,
@@ -73,6 +75,7 @@ export default function ObjectRow({
           completions={completions}
           getCompletion={getCompletion}
           onOpenCompletion={onOpenCompletion}
+          onOpenSchedule={onOpenSchedule}
           depth={0}
           scheduleExpanded={scheduleExpanded}
           onToggleExpanded={onToggleScheduleExpanded}

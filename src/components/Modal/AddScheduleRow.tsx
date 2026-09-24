@@ -28,6 +28,7 @@ interface Props {
     weekdays?: number[],
     monthdays?: number[],
     end_date?: string,
+    description?: string,
   ) => void
   depth?: number
 }
@@ -35,6 +36,7 @@ interface Props {
 export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [intvl, setIntvl] = useState<Interval>('monthly')
   const [timingMode, setTimingMode] = useState<ScheduleMode>('specific')
   const [startDate, setStartDate] = useState(getToday())
@@ -49,7 +51,7 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   }
 
   function reset() {
-    setTitle(''); setIntvl('monthly'); setTimingMode('specific'); setStartDate(getToday())
+    setTitle(''); setDescription(''); setIntvl('monthly'); setTimingMode('specific'); setStartDate(getToday())
     setWeekdays([]); setMonthdays([]); setEndDate('')
     setOpen(false)
   }
@@ -82,13 +84,14 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
   function commit() {
     if (!isValid()) return
     const ed = endDate || undefined
+    const desc = description.trim() || undefined
     const scheduleMode = supportsFlexibleTiming(intvl) ? timingMode : 'specific'
     if (intvl === 'weekly' && timingMode === 'specific') {
-      onAdd(title.trim(), intvl, startDate, scheduleMode, weekdays, undefined, ed)
+      onAdd(title.trim(), intvl, startDate, scheduleMode, weekdays, undefined, ed, desc)
     } else if (USE_MONTHDAYS.includes(intvl) && timingMode === 'specific' && monthdays.length > 0) {
-      onAdd(title.trim(), intvl, startDate, scheduleMode, undefined, monthdays, ed)
+      onAdd(title.trim(), intvl, startDate, scheduleMode, undefined, monthdays, ed, desc)
     } else {
-      onAdd(title.trim(), intvl, startDate, scheduleMode, undefined, undefined, ed)
+      onAdd(title.trim(), intvl, startDate, scheduleMode, undefined, undefined, ed, desc)
     }
     reset()
   }
@@ -258,6 +261,15 @@ export default function AddScheduleRow({ onAdd, depth = 0 }: Props) {
             29일 이상은 짧은 달에서 말일로 처리됩니다
           </span>
         )}
+
+        {/* 설명 (선택) */}
+        <textarea
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          placeholder="설명 (선택)"
+          className="w-full h-16 resize-none text-xs border border-gray-200 rounded px-2 py-1.5
+                     outline-none focus:border-blue-300 placeholder-gray-300"
+        />
 
         {/* 버튼 */}
         <div className="flex items-center gap-2">

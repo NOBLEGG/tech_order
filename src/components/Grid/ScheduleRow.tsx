@@ -26,6 +26,7 @@ interface Props {
   completions: Completion[]
   getCompletion: (scheduleId: string, date: Date) => Completion | undefined
   onOpenCompletion: (schedule: Schedule, date: Date) => void
+  onOpenSchedule: (scheduleId: string) => void
   depth: number
   scheduleExpanded: Record<string, boolean>
   onToggleExpanded: (scheduleId: string) => void
@@ -40,6 +41,7 @@ export default function ScheduleRow({
   completions,
   getCompletion,
   onOpenCompletion,
+  onOpenSchedule,
   depth,
   scheduleExpanded,
   onToggleExpanded,
@@ -139,7 +141,13 @@ export default function ScheduleRow({
               </button>
             )}
             {!hasSubs && <span className="w-[10px] flex-shrink-0" />}
-            <span className="truncate">{schedule.title}</span>
+            <button
+              type="button"
+              onClick={() => onOpenSchedule(schedule.id)}
+              className="truncate text-left hover:text-blue-600 transition-colors"
+            >
+              {schedule.title}
+            </button>
             <span className="shrink-0 rounded-full border border-gray-200 px-1.5 py-0.5 text-[10px] text-gray-400">
               {getScheduleBadge(schedule)}
             </span>
@@ -157,6 +165,7 @@ export default function ScheduleRow({
           completions={completions}
           getCompletion={getCompletion}
           onOpenCompletion={onOpenCompletion}
+          onOpenSchedule={onOpenSchedule}
           depth={depth + 1}
           scheduleExpanded={scheduleExpanded}
           onToggleExpanded={onToggleExpanded}

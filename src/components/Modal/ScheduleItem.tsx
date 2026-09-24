@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Schedule, Interval } from '../../types'
@@ -44,23 +43,11 @@ export function formatScheduleLabel(schedule: Schedule) {
 interface Props {
   schedule: Schedule
   depth: number
-  onUpdate: (id: string, patch: Partial<Schedule>) => void | Promise<void>
-  onDelete: (id: string) => void | Promise<void>
-  onCloseSchedule: (id: string) => void | Promise<void>
+  onOpen: (id: string) => void
   children?: React.ReactNode
 }
 
-export default function ScheduleItem({
-  schedule,
-  depth,
-  onUpdate,
-  onDelete,
-  onCloseSchedule,
-  children,
-}: Props) {
-  const [editingTitle, setEditingTitle] = useState(false)
-  const [title, setTitle] = useState(schedule.title)
-
+export default function ScheduleItem({ schedule, depth, onOpen, children }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: schedule.id,
   })
@@ -69,25 +56,6 @@ export default function ScheduleItem({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
-  }
-
-  async function commitTitle() {
-    setEditingTitle(false)
-    if (title.trim() && title.trim() !== schedule.title) {
-      await onUpdate(schedule.id, { title: title.trim() })
-    } else {
-      setTitle(schedule.title)
-    }
-  }
-
-  async function handleCloseSchedule() {
-    if (!window.confirm(`"${schedule.title}" 스케줄을 마칠까요?`)) return
-    await onCloseSchedule(schedule.id)
-  }
-
-  async function handleDeleteSchedule() {
-    if (!window.confirm(`"${schedule.title}" 스케줄을 휴지통으로 옮길까요?`)) return
-    await onDelete(schedule.id)
   }
 
   return (
@@ -107,48 +75,16 @@ export default function ScheduleItem({
         </button>
 
         {/* title */}
-        {editingTitle ? (
-          <input
-            autoFocus
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            onBlur={commitTitle}
-            onKeyDown={e => {
-              if (e.key === 'Enter') commitTitle()
-              if (e.key === 'Escape') { setTitle(schedule.title); setEditingTitle(false) }
-            }}
-            className="flex-1 text-sm border-b border-blue-400 outline-none bg-transparent py-0.5"
-          />
-        ) : (
-          <span
-            className="flex-1 text-sm text-gray-700 cursor-text hover:text-gray-900"
-            onClick={() => setEditingTitle(true)}
-          >
-            {schedule.title}
-          </span>
-        )}
+        <button
+          type="button"
+          onClick={() => onOpen(schedule.id)}
+          className="flex-1 min-w-0 text-left text-sm text-gray-700 hover:text-blue-600 truncate"
+        >
+          {schedule.title}
+        </button>
 
         {/* interval */}
-        <span className="text-xs text-gray-400">{formatScheduleLabel(schedule)}</span>
-
-        {/* close / delete */}
-        <button
-          onClick={handleCloseSchedule}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-gray-300
-                     hover:text-gray-600 flex-shrink-0"
-        >
-          마침
-        </button>
-        <button
-          onClick={handleDeleteSchedule}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-300
-                     hover:text-red-400 flex-shrink-0"
-          aria-label="휴지통"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+        <span className="text-xs text-gray-400 flex-shrink-0">{formatScheduleLabel(schedule)}</span>
       </div>
 
       {/* sub-schedules slot */}

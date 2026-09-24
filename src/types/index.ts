@@ -10,6 +10,7 @@ export interface AppObject {
   id: string
   user_id: string
   title: string
+  description: string | null   // 설명 (선택)
   ref_url: string | null       // 레퍼런스: URL 또는 파일 패스
   ref_type: ReferenceType | null
   sort_order: number
@@ -30,6 +31,7 @@ export interface Schedule {
   obj_id: string               // 소속 AppObject ID
   parent_id: string | null     // 하위 스케줄일 경우 부모 Schedule ID
   title: string
+  description: string | null   // 설명 (선택)
   intvl: Interval
   schedule_mode?: ScheduleMode | null
   start_date: string

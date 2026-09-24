@@ -20,7 +20,7 @@ interface DataContextValue {
   trashedSchedules: Schedule[]
   objectClosureReviews: ObjectClosureReview[]
   loading: boolean
-  addObject: (title: string) => Promise<void>
+  addObject: (title: string, description?: string) => Promise<void>
   updateObject: (id: string, patch: Partial<AppObject>) => Promise<void>
   deleteObject: (id: string) => Promise<boolean>
   trashObject: (id: string) => Promise<boolean>
@@ -31,7 +31,7 @@ interface DataContextValue {
   addSchedule: (
     obj_id: string, title: string, intvl: Interval, start_date: string,
     schedule_mode?: ScheduleMode, parent_id?: string, weekdays?: number[],
-    monthdays?: number[], end_date?: string
+    monthdays?: number[], end_date?: string, description?: string
   ) => Promise<Schedule | null>
   updateSchedule: (id: string, patch: Partial<Schedule>) => Promise<Schedule | null>
   deleteSchedule: (id: string) => Promise<boolean>
@@ -261,12 +261,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function addObject(title: string) {
+  async function addObject(title: string, description?: string) {
     const maxOrder = objects.length > 0 ? Math.max(...objects.map(o => o.sort_order)) + 1 : 0
     const { error } = await supabase
       .from('objects')
       .insert({
         title,
+        description: description?.trim() || null,
         user_id: user!.id,
         sort_order: maxOrder,
         closed_at: null,
@@ -433,7 +434,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   async function addSchedule(
     obj_id: string, title: string, intvl: Interval, start_date: string,
     schedule_mode: ScheduleMode = 'specific',
-    parent_id?: string, weekdays?: number[], monthdays?: number[], end_date?: string
+    parent_id?: string, weekdays?: number[], monthdays?: number[], end_date?: string,
+    description?: string
   ): Promise<Schedule | null> {
     const siblings = schedules.filter(s =>
       s.obj_id === obj_id && (parent_id ? s.parent_id === parent_id : s.parent_id === null)
@@ -444,6 +446,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       .insert({
         obj_id,
         title,
+        description: description?.trim() || null,
         intvl,
         start_date,
         schedule_mode,
